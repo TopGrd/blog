@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Who am i?</title>
+  <subtitle>saver</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://topgrd.me/"/>
+  <updated>2017-04-26T15:03:54.833Z</updated>
+  <id>http://topgrd.me/</id>
+  
+  <author>
+    <name>topgrd</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>React中的setState是异步的</title>
+    <link href="http://topgrd.me/2016/12/23/setState/"/>
+    <id>http://topgrd.me/2016/12/23/setState/</id>
+    <published>2016-12-22T16:00:00.000Z</published>
+    <updated>2017-04-26T15:03:54.833Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="React中的setState是异步的"><a href="#React中的setState是异步的" class="headerlink" title="React中的setState是异步的"></a>React中的setState是异步的</h1><p>在写Select组件时，发现我换了选项后，结果依然返回之前的值，导致我的选项与值的展示不对应。以下是关于这个问题的解释：<br>先看源码ReactComponent.js中关于setState函数的文档  </p>
+<blockquote>
+<p>绝对不要直接改变 this.state，因为在之后调用 setState() 可能会替换掉你做的更改。把 this.state 当做不可变的。<br>setState() 不会立刻改变 this.state，而是创建一个即将处理的 state 转变。在调用该方法之后获取 this.state 的值可能会得到现有的值，而不是最新设置的值。<br>不保证 setState() 调用的同步性，为了提升性能，可能会批量执行 state 转变和 DOM 渲染。<br>setState() 将总是触发一次重绘，除非在 shouldComponentUpdate() 中实现了条件渲染逻辑。如果使用可变的对象，但是又不能在   shouldComponentUpdate() 中实现这种逻辑，仅在新 state 和之前的 state 存在差异的时候调用 setState() 可以避免不必要的重新渲染。  </p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line">* Sets a subset of the state. Always use this to mutate</div><div class="line">* state. You should treat `this.state` as immutable.</div><div class="line">*</div><div class="line">* There is no guarantee that `this.state` will be immediately updated, so</div><div class="line">* accessing `this.state` after calling this method may return the old value.</div><div class="line">*</div><div class="line">* There is no guarantee that calls to `setState` will run synchronously,</div><div class="line">* as they may eventually be batched together.  You can provide an optional</div><div class="line">* callback that will be executed when the call to setState is actually</div><div class="line">* completed.</div><div class="line">*</div><div class="line">* When a function is provided to setState, it will be called at some point in</div><div class="line">* the future (not synchronously). It will be called with the up to date</div><div class="line">* component arguments (state, props, context). These values can be different</div><div class="line">* from this.* because your function may be called after receiveProps but before</div><div class="line">* shouldComponentUpdate, and this new state, props, and context will not yet be</div><div class="line">* assigned to this.</div><div class="line">*</div><div class="line">* @param &#123;object|function&#125; partialState Next partial state or function to</div><div class="line">*        produce next partial state to be merged with current state.</div><div class="line">* @param &#123;?function&#125; callback Called after state is updated.</div><div class="line">* @final</div><div class="line">* @protected</div><div class="line">*/</div><div class="line">ReactComponent.prototype.setState = <span class="function"><span class="keyword">function</span> (<span class="params">partialState, callback</span>) </span>&#123;</div><div class="line">    !(<span class="keyword">typeof</span> partialState === <span class="string">'object'</span> || <span class="keyword">typeof</span> partialState === <span class="string">'function'</span> || partialState == <span class="literal">null</span>)</div><div class="line">        ? <span class="literal">true</span></div><div class="line">            ? invariant(<span class="literal">false</span>, <span class="string">'setState(...): takes an object of state variables to update or a function which returns an object of state variables.'</span>)</div><div class="line">            : _prodInvariant(<span class="string">'85'</span>)</div><div class="line">        : <span class="keyword">void</span> <span class="number">0</span>;</div><div class="line">    <span class="keyword">this</span>.updater.enqueueSetState(<span class="keyword">this</span>, partialState);</div><div class="line">    <span class="keyword">if</span> (callback) &#123;</div><div class="line">        <span class="keyword">this</span>.updater.enqueueCallback(<span class="keyword">this</span>, callback, <span class="string">'setState'</span>);</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>文档解释了setState()是异步执行的，所以在setState中提供了回调函数，所以可以把setState后面的动作设置到回调函数里，:)</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;React中的setState是异步的&quot;&gt;&lt;a href=&quot;#React中的setState是异步的&quot; class=&quot;headerlink&quot; title=&quot;React中的setState是异步的&quot;&gt;&lt;/a&gt;React中的setState是异步的&lt;/h1&gt;&lt;p&gt;在写
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>React + ES6 中绑定this</title>
+    <link href="http://topgrd.me/2015/11/03/NoAutoBinding/"/>
+    <id>http://topgrd.me/2015/11/03/NoAutoBinding/</id>
+    <published>2015-11-02T16:00:00.000Z</published>
+    <updated>2017-04-26T15:01:48.316Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="React-ES6-中绑定this"><a href="#React-ES6-中绑定this" class="headerlink" title="React + ES6 中绑定this"></a>React + ES6 中绑定this</h1><p>在使用React.creatClass时，如果给一个组件绑定事件（onClick，onChange等），是不需要将this在bind到上面的，然而在使用ES6时，是不会自动绑定this的。why？<br>Go Doc:  </p>
+<blockquote>
+<p><strong>Autobinding</strong><br>When creating callbacks in JavaScript, you usually need to explicitly bind a method to its instance such that the value of this is correct. With React, every method is automatically bound to its component instance (except when using ES6 class syntax). React caches the bound method such that it’s extremely CPU and memory efficient. It’s also less typing!  </p>
+</blockquote>
+<p>在React中，如果创建了回调函数，是会自动将this绑定到他的组件上面的。<strong>(except when using Es6 class syntax)</strong> , :(  </p>
+<blockquote>
+<p><strong>No Autobinding</strong><br>Methods follow the same semantics as regular ES6 classes, meaning that they don’t automatically bind this to the instance. You’ll have to explicitly use .bind(this) or arrow functions =&gt;:  </p>
+</blockquote>
+<p>所以在使用ES6写react组件时，可以这么写：<br><strong>第一种</strong><br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">_handleClick(e) &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>);</div><div class="line">&#125;</div><div class="line">render() &#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">        <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">            <span class="tag">&lt;<span class="name">h1</span> <span class="attr">onClick</span>=<span class="string">&#123;this._handleClick.bind(this)&#125;</span>&gt;</span>点击<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    );</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><strong>第二种</strong><br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">_handleClick(e) &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>);</div><div class="line">&#125;</div><div class="line">render() &#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">        <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">            <span class="tag">&lt;<span class="name">h1</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span>=&gt;</span>this._handleClick()&#125;&gt;点击<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    );</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><strong>第三种</strong><br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">constructor</span>() &#123;</div><div class="line">    <span class="keyword">this</span>._handlerClick = <span class="keyword">this</span>._handlerClick.bind(<span class="keyword">this</span>);</div><div class="line">&#125;</div><div class="line">_handleClick(e) &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>);</div><div class="line">&#125;</div><div class="line">render() &#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">        <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">            <span class="tag">&lt;<span class="name">h1</span> <span class="attr">onClick</span>=<span class="string">&#123;this._handleClick&#125;</span>&gt;</span>点击<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    );</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><strong>第四种</strong><br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">_handleClick(e) &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>);</div><div class="line">&#125;</div><div class="line">render() &#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">        <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">            <span class="tag">&lt;<span class="name">h1</span> <span class="attr">onClick</span>=<span class="string">&#123;::this._handleClick&#125;</span>&gt;</span>点击<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    );</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>特别解释下第四种<br>函数绑定运算符是并排的两个双冒号（::），双冒号左边是一个对象，右边是一个函数。该运算符会自动将左边的对象，作为上下文环境（即this对象），绑定到右边的函数上面，ES7的草案，babel已经支持。<br>facebook关于没有自动绑定的介绍:<a href="https://facebook.github.io/react/docs/reusable-components.html#no-autobinding" target="_blank" rel="external">autobind</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;React-ES6-中绑定this&quot;&gt;&lt;a href=&quot;#React-ES6-中绑定this&quot; class=&quot;headerlink&quot; title=&quot;React + ES6 中绑定this&quot;&gt;&lt;/a&gt;React + ES6 中绑定this&lt;/h1&gt;&lt;p&gt;在使用Rea
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>React中的组件写法</title>
+    <link href="http://topgrd.me/2015/10/15/noStateComponent/"/>
+    <id>http://topgrd.me/2015/10/15/noStateComponent/</id>
+    <published>2015-10-14T16:00:00.000Z</published>
+    <updated>2017-04-26T15:02:59.707Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="React中的组件写法"><a href="#React中的组件写法" class="headerlink" title="React中的组件写法"></a>React中的组件写法</h1><h2 id="React-createClass-ES5"><a href="#React-createClass-ES5" class="headerlink" title="React.createClass  (ES5)"></a>React.createClass  (ES5)</h2><p>在React刚出世的时候，官方是这样定义一个react组件的。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> Count = React.createClass(&#123;</div><div class="line">  <span class="attr">defaultProps</span>: &#123;</div><div class="line">    <span class="attr">initialValue</span>: <span class="number">0</span></div><div class="line">  &#125;,</div><div class="line">  <span class="attr">getInitialState</span>: &#123;</div><div class="line">    retrun &#123;</div><div class="line">      <span class="attr">count</span>: <span class="number">0</span></div><div class="line">    &#125;</div><div class="line">  &#125;,</div><div class="line">  <span class="attr">onChangeHandler</span>: <span class="function"><span class="keyword">function</span> (<span class="params">e</span>) </span>&#123;</div><div class="line">    <span class="keyword">this</span>.setState(&#123;</div><div class="line">      <span class="attr">count</span>: e.target.value</div><div class="line">    &#125;)</div><div class="line">  &#125;,</div><div class="line">  <span class="attr">render</span>: <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">      <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">        Insert Your Count</div><div class="line">        <span class="tag">&lt;<span class="name">input</span></span></div><div class="line">          <span class="attr">onChange</span>=<span class="string">&#123;this.onChangeHandler&#125;</span> <span class="attr">value</span>=<span class="string">&#123;this.state.count&#125;</span> /&gt;</div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    )</div><div class="line">  &#125;</div><div class="line">&#125;);</div><div class="line">ReactDOM.render(<span class="tag">&lt;<span class="name">Count</span> /&gt;</span>, document.getElementById('app'));</div></pre></td></tr></table></figure></p>
+<h2 id="extends-React-Component-ES6"><a href="#extends-React-Component-ES6" class="headerlink" title="extends React.Component (ES6)"></a>extends React.Component (ES6)</h2><p>随着ES6的流行，官方使用了ES6中的Class来创建组件，继承自React.Component，Component是React组件的基类，封装了react组件的属性与方法。在这种写法中，要注意的是this绑定，详情参见我的往期博文。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Count</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span> </span>&#123;</div><div class="line">  <span class="keyword">constructor</span>(props) &#123;</div><div class="line">    <span class="keyword">super</span>(props);</div><div class="line">    <span class="keyword">this</span>.state = &#123;</div><div class="line">      <span class="attr">count</span>: <span class="number">0</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  onChangeHandler(e) &#123;</div><div class="line">    <span class="keyword">this</span>.setState(&#123;</div><div class="line">      <span class="attr">count</span>: e.target.value</div><div class="line">    &#125;)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  render() &#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">      <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">        Insert Your Count</div><div class="line">        <span class="tag">&lt;<span class="name">input</span></span></div><div class="line">          <span class="attr">onChange</span>=<span class="string">&#123;(e)</span>=&gt;this.onChangeHandler(e)&#125; value=&#123;this.state.count&#125; /&gt;</div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    )</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">Count.defaultProps = &#123;</div><div class="line">  initialValue: 0</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="无状态组件-ES6"><a href="#无状态组件-ES6" class="headerlink" title="无状态组件 (ES6)"></a>无状态组件 (ES6)</h2><p>无状态函数式组件，使用纯函数定义的组件，很简洁，但是内部不能使用this，react的state和生命周期方法，所以称为无状态组件。这种组件开销低，在我们写应用时，基本的组件尽量使用它。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> Header =<span class="function">(<span class="params">&#123; title &#125;</span>) =&gt;</span> (</div><div class="line">  <span class="xml"><span class="tag">&lt;<span class="name">h2</span>&gt;</span>&#123;title&#125;<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span></div><div class="line">)</div><div class="line"></div><div class="line"><span class="keyword">const</span> Text = <span class="function">(<span class="params">&#123; name &#125;</span>) =&gt;</span> &#123;</div><div class="line">  <span class="keyword">const</span> sayHello = <span class="function"><span class="params">()</span> =&gt;</span></div><div class="line">    alert(<span class="string">`hello <span class="subst">$&#123;name&#125;</span>!`</span>);</div><div class="line"></div><div class="line">  <span class="keyword">return</span> (</div><div class="line">    <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">      Welcome to this room.</div><div class="line">      <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;sayHi&#125;</span>&gt;</span>Click It!<span class="tag">&lt;/<span class="name">button</span>&gt;</span>  </div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">  )</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;React中的组件写法&quot;&gt;&lt;a href=&quot;#React中的组件写法&quot; class=&quot;headerlink&quot; title=&quot;React中的组件写法&quot;&gt;&lt;/a&gt;React中的组件写法&lt;/h1&gt;&lt;h2 id=&quot;React-createClass-ES5&quot;&gt;&lt;a hre
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>margin相关问题</title>
+    <link href="http://topgrd.me/2014/12/15/2014-12-15-marginproblem/"/>
+    <id>http://topgrd.me/2014/12/15/2014-12-15-marginproblem/</id>
+    <published>2014-12-14T16:00:00.000Z</published>
+    <updated>2017-04-26T15:07:09.267Z</updated>
+    
+    <content type="html"><![CDATA[<a id="more"></a>  
+<p>##上下margin叠加<br>当两个元素为上下关系，且都具有margin属性时，此时margin会造成外边距叠加。<br>例如，页面有2个div id为a和b，他们的css如下:<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="selector-id">#a</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">&#125;  </div><div class="line"><span class="selector-id">#b</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这两个元素都有上下边距为10px，按道理说他们两之间应该上下相隔20px。但浏览器显示结果并非这样。从下图通过左右的间距对比可以看出他们之间只相隔10px。<br>  <img src="/assets/img/margin1.jpg" alt="margin1"><br>为什么会这样呢，通过网上搜寻以后发现这是css设计造成的。因为他们考虑到如果我们要对段落进行控制，如果第一段与上方距离10px，那第二段与第一段之间的距离就变成20px，这不是我们想要的，因此设计出了空白边叠加规则。<br>空白边叠加时，以较大的margin值为准。<br>怎么解决这个问题呢，根据css解释规则，在把元素设置float后，将不再进行margin叠加<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="selector-id">#a</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">  <span class="attribute">float</span>:left;</div><div class="line">&#125;  </div><div class="line"><span class="selector-id">#b</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">  <span class="attribute">float</span>:left;</div><div class="line">  <span class="attribute">clear</span>:left;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>结果得到如下图的效果<br><img src="/assets/img/margin2.jpg" alt="margin2"><br>我们看到a和b之间的间隔已经变为20px。   </p>
+<p>##IE6下元素float后margin左右边距加倍<br>在IE6下如果元素设置浮动后，元素的左右边距会加倍。也就是常听到的IE6双边距问题。但我们只需要在元素的样式中添加<code>display:inline</code>就可以解决。  </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
+&lt;p&gt;##上下margin叠加&lt;br&gt;当两个元素为上下关系，且都具有margin属性时，此时margin会造成外边距叠加。&lt;br&gt;例如，页面有2个div id为a和b，他们的css如下:&lt;br&gt;&lt;figure class=&quot;highligh
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>node.js连接mysql数据库</title>
+    <link href="http://topgrd.me/2014/12/03/2014-12-03-nodejs_connect_mysql/"/>
+    <id>http://topgrd.me/2014/12/03/2014-12-03-nodejs_connect_mysql/</id>
+    <published>2014-12-02T16:00:00.000Z</published>
+    <updated>2017-04-26T14:58:14.253Z</updated>
+    
+    <content type="html"><![CDATA[<p>今天在学习node时，发现书上的例子是node连接mongodb数据库的，没有提到mysql,而我还没有下载mongodb，就先想连接电脑上已经有点mysql，之前做的东西数据库基本上都用的mysql，经过上网查找相关信息，终于知道如何用node连接mysql进行数据库操作了.<br><a id="more"></a><br>首先安装mysql包(nodejs连接mysql的包有好几种(db-mysql..)，这里我用的是mysql。</p>
+<p><code>npm install mysql</code></p>
+<p>然后就是写连接代码了<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Created with IntelliJ IDEA.</div><div class="line"> * Creator: LeeZhuo</div><div class="line"> * Date: 2014/12/3</div><div class="line"> * Time: 22:22</div><div class="line"> */</div><div class="line"><span class="keyword">var</span> mysql = <span class="built_in">require</span>(<span class="string">'mysql'</span>);</div><div class="line"></div><div class="line"><span class="keyword">var</span> connection = mysql.createConnection(&#123;</div><div class="line">  <span class="attr">host</span>: <span class="string">'localhost'</span>, <span class="comment">//host</span></div><div class="line">  user: <span class="string">'topgrd'</span>, <span class="comment">//用户名</span></div><div class="line">  password: <span class="string">''</span>, <span class="comment">//密码</span></div><div class="line">  database: <span class="string">'library'</span> <span class="comment">//要连接的数据库</span></div><div class="line">&#125;);</div><div class="line"><span class="comment">/*</span></div><div class="line">    </div><div class="line">var connection = mysql.createConnection('mysql://user:password@host/database');             //另一种写法</div><div class="line">*/</div><div class="line">connection.connect();</div><div class="line"><span class="comment">/*定义数据库CRUD查询语句*/</span></div><div class="line"><span class="keyword">var</span> queryString = <span class="string">'select * from bookinfo'</span>;</div><div class="line"></div><div class="line">connection.query(queryString, <span class="function"><span class="keyword">function</span>(<span class="params">err, results, field</span>) </span>&#123;</div><div class="line">  <span class="keyword">if</span> (err) &#123;</div><div class="line">    <span class="keyword">throw</span> err;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i <span class="keyword">in</span> results) &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="string">'bookname: '</span> + results[i].bookname + <span class="string">'\tauthor: '</span> + results[i].author + <span class="string">'\tpressyear: '</span> + results[i].pressyear);</div><div class="line">  &#125;</div><div class="line">&#125;);</div><div class="line">connection.end(); <span class="comment">//关闭连接</span></div></pre></td></tr></table></figure></p>
+<p> 上面的代码将我library数据库中bookinfo表的信息打印出来<br> <img src="/assets/img/mysql.jpg" alt="photo">  </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;今天在学习node时，发现书上的例子是node连接mongodb数据库的，没有提到mysql,而我还没有下载mongodb，就先想连接电脑上已经有点mysql，之前做的东西数据库基本上都用的mysql，经过上网查找相关信息，终于知道如何用node连接mysql进行数据库操作了.&lt;br&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>正则表达式(三)</title>
+    <link href="http://topgrd.me/2014/12/01/2014-12-01-RegExp(3)/"/>
+    <id>http://topgrd.me/2014/12/01/2014-12-01-RegExp(3)/</id>
+    <published>2014-11-30T16:00:00.000Z</published>
+    <updated>2017-04-26T14:57:19.922Z</updated>
+    
+    <content type="html"><![CDATA[<p>简单的正则验证<br><a id="more"></a>  </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//检查邮政编码</span></div><div class="line"><span class="keyword">var</span> p = <span class="regexp">/[1-9][0-9]&#123;5&#125;/</span>;</div><div class="line"><span class="keyword">var</span> s = <span class="string">'615400'</span>;</div><div class="line"><span class="comment">//alert(p.test(s))      //true</span></div><div class="line"></div><div class="line"><span class="comment">//检查文件压缩包</span></div><div class="line"><span class="keyword">var</span> p1 = <span class="regexp">/^[\w\-]+\.zip|rar|7z|gz$/</span>;</div><div class="line"><span class="keyword">var</span> s1 = <span class="string">'ko7.zip'</span>;</div><div class="line"><span class="keyword">var</span> s11 = <span class="string">'99.rar'</span>;</div><div class="line"><span class="keyword">var</span> s12 = <span class="string">'d-w.gz'</span>;</div><div class="line"><span class="comment">//alert(p1.test(s1));   //true</span></div><div class="line"><span class="comment">//alert(p1.test(s11));  // true</span></div><div class="line"><span class="comment">//alert(p1.test(s12));  // true</span></div><div class="line"></div><div class="line"><span class="comment">//去空格</span></div><div class="line"><span class="keyword">var</span> p2 = <span class="regexp">/\s/g</span>;</div><div class="line"><span class="keyword">var</span> s2 = <span class="string">'he da dd'</span>;</div><div class="line"><span class="comment">//alert(s2.replace(p2,''));     //hedadd</span></div><div class="line"></div><div class="line"><span class="comment">//去首尾空格</span></div><div class="line"><span class="keyword">var</span> p3 = <span class="regexp">/^\s+(.+?)\s+$/</span>; <span class="comment">//惰性模式</span></div><div class="line"><span class="keyword">var</span> s3 = <span class="string">'   he ll o   '</span>;</div><div class="line"><span class="keyword">var</span> res = p3.exec(s3)[<span class="number">1</span>];</div><div class="line"><span class="comment">//alert('|'+res+'|');       // |he ll o|</span></div><div class="line"></div><div class="line"><span class="comment">//简单邮箱验证</span></div><div class="line"><span class="keyword">var</span> p4 = <span class="regexp">/^([\w\.\-]+)@([\w\-]+)(\.([a-zA-Z]&#123;2,4&#125;))&#123;1,2&#125;$/</span>;</div><div class="line"><span class="keyword">var</span> s4 = <span class="string">'coding.A.dream@gmail.com'</span>;</div><div class="line"><span class="keyword">var</span> s5 = <span class="string">'topgrd@163.4om'</span></div><div class="line"><span class="keyword">var</span> s6 = <span class="string">'topgrd@dd.com.cn'</span></div><div class="line">  <span class="comment">//alert(p4.test(s4))  // true</span></div><div class="line">  <span class="comment">//alert(p4.test(s5))  // false</span></div><div class="line">  <span class="comment">//alert(p4.test(s6))  //true</span></div><div class="line">  <span class="comment">//alert(p4.exec(s4))</span></div><div class="line">  <span class="comment">//alert(p4.exec(s6))</span></div></pre></td></tr></table></figure>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;简单的正则验证&lt;br&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>正则表达式(一)</title>
+    <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(1)/"/>
+    <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(1)/</id>
+    <published>2014-11-29T16:00:00.000Z</published>
+    <updated>2017-04-26T15:11:11.397Z</updated>
+    
+    <content type="html"><![CDATA[<p>最近才发现原来我一直没学正则,之前学js一直跳过了这块,这两天赶紧补上.</p>
+<a id="more"></a>  
+<pre><code>var box=/box/ig;    //i代表不区分大小写 g代表全局匹配 还有个m表示多行匹配
+var str=&apos;BOX&apos;;
+//alert(box.test(str))
+var dd=&apos;this is a Box!that is aa box!&apos;;
+//alert(box.test(dd))    //true
+//alert(dd.replace(box,&apos;top&apos;)); // 替换  this is a top!that is aa top!
+//alert(dd.search(box));  //查找box第一次出现的位置     10
+//alert(dd.match(box).length)   //匹配到2次
+box.test(dd);
+//alert(RegExp.input);        //this is a Box!that is aa box! 返回被查找的字符串
+//alert(RegExp.leftContext)  //返回第一次匹配到的左边的字符串
+//alert(RegExp.rightContext)  //返回第一次匹配到的右边的字符串
+var dox = /b.x/ig;                    //true  .匹配任意字符
+//alert(dox.test(dd))
+
+var pa=/bo*x/i;   //*表示匹配任意多个o
+var st = &apos;booox&apos;;
+//alert(pa.test(st))    true
+var pad=/bo{2,4}x/;  //匹配2~4个o
+//alert(pad.test(st))            true
+
+var pp=/[a-z]o{3}x/;        //匹配3次o    
+//alert(pp.test(st))        true
+var pat=/b[^0-9a-z]x/;
+var ss=&apos;b0x&apos;;
+//alert(pat.test(ss))//里面的^表示非
+var pare=/^[a-z]ox/;//外面的^表示行首匹配
+var xxx=&apos;bbox&apos;,xx2=&apos;box&apos;;
+//alert(pare.test(xxx));
+//alert(pare.test(xx2));
+var ppp=/b\wx/;                //\w表示匹配字母数字下划线_即[a-zA-Z0-9_]
+//alert(ppp.test(ss));
+var lol=/b\Wx/;                //\W表示匹配非字母数字下划线_即[^a-zA-Z0-9_]
+var so=&apos;b-x&apos;;
+//alert(lol.test(so))
+var og=/^google$/;    //$行尾匹配 og表示前面后面都没有，完全匹配。
+var gg=&apos;google&apos;;    
+//alert(og.test(gg));
+var dd=/google\b/;   // \b表示十否到达边界
+//alert(dd.test(gg))；
+var huo=/google||baidu/; //|表示或
+var ci=/(google){2,4}/;   //()表示分组 {}次数
+var googles=&apos;googlegooglegoogle&apos;;
+//alert(huo.test(googles));
+var paten=/g(.*)e/;
+paten.test(gg);
+//alert(RegExp.$1);    //RegExp.$1表示获取模式中第一个分组对应的字符串
+document.write(gg.replace(paten,&apos;this is a &lt;strong&gt;$1&lt;/strong&gt;&lt;br&gt;&apos;));
+var pard=/(.*)\s(.*)/;
+var stt=&apos;google baidu&apos;;
+document.write(stt.replace(pard,&apos;$2 $1&apos;));
+
+var str5=&apos;3hello3 3hello3 3hello3&apos;;        //贪婪模式
+var paten2=/3(.*)3/;
+//alert(str5.replace(paten2,&apos;$1&apos;));
+var paten3=/3(.*?)3/g;                //惰性模式
+//alert(str5.replace(paten3,&apos;$1&apos;));
+var paten4=/3[^8]3/;
+//alert(str5.replace(paten3,&apos;$1&apos;));
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;最近才发现原来我一直没学正则,之前学js一直跳过了这块,这两天赶紧补上.&lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>正则表达式(二)</title>
+    <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/"/>
+    <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/</id>
+    <published>2014-11-29T16:00:00.000Z</published>
+    <updated>2017-04-26T15:10:58.821Z</updated>
+    
+    <content type="html"><![CDATA[<a id="more"></a>  
+<h1 id="正则"><a href="#正则" class="headerlink" title="正则"></a>正则</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> pattern = <span class="regexp">/^([a-z]+)\s([0-9]&#123;4&#125;)/</span>; <span class="comment">//使用分组</span></div><div class="line"><span class="keyword">var</span> str = <span class="string">'hello 2014'</span>;</div><div class="line"><span class="keyword">var</span> arr = pattern.exec(str);</div><div class="line"><span class="comment">//alert(arr[0]);  //hello 2014 返回匹配到的整个字符串</span></div><div class="line"><span class="comment">//alert(arr[1]);    //hello          返回匹配到了第一个分组的字符串</span></div><div class="line"><span class="comment">//alert(arr[2]);    //2014           返回匹配到的第2个分组的字符串</span></div><div class="line"><span class="keyword">var</span> pat = <span class="regexp">/^([a-z]+)\s(?:[0-9]&#123;4&#125;)/</span>;</div><div class="line"><span class="comment">//alert(pat.exec(str));  //hello 2014,hello </span></div><div class="line"><span class="comment">//使用?:设置非捕获分组,该分组不会返回</span></div><div class="line"><span class="keyword">var</span> p = <span class="regexp">/(a?(b?(c?)))/</span>; <span class="comment">//嵌套分组 从外向里捕获</span></div><div class="line"><span class="keyword">var</span> s = <span class="string">'abc'</span>;</div><div class="line"><span class="comment">//alert(p.exec(s));     //abc abc bc c</span></div><div class="line"><span class="keyword">var</span> p1 = <span class="regexp">/he(?=llo)/</span>; <span class="comment">//he后面必须跟llo      f</span></div><div class="line"><span class="keyword">var</span> s1 = <span class="string">'hello'</span>;</div><div class="line"><span class="comment">//alert(p1.exec(s1));           //返回 he</span></div><div class="line"><span class="keyword">var</span> p2 = <span class="regexp">/\[/</span>; <span class="comment">// 用\来转义特殊字符</span></div><div class="line"><span class="keyword">var</span> s2 = <span class="string">'['</span>;</div><div class="line"><span class="comment">//alert(p2.test(s2));   //true</span></div><div class="line"><span class="keyword">var</span> p3 = <span class="regexp">/^\d+/gm</span>; <span class="comment">//m开启多行匹配 若没m则只替换第一行</span></div><div class="line"><span class="keyword">var</span> s3 = <span class="string">'1.first\n2.second\n3.third'</span>;</div><div class="line"><span class="comment">//alert(s3.replace(p3,'#'));</span></div><div class="line"><span class="comment">/* 结果</span></div><div class="line">#.first</div><div class="line">#.second</div><div class="line">#.third</div><div class="line">*/</div><div class="line"><span class="comment">//正则检测输入字符串是否大于5位且必须为字母与数字的混合</span></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">check</span>(<span class="params">str</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="regexp">/[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/</span>);</div><div class="line">    <span class="keyword">if</span> (reg.test(str) &amp;&amp; str.length &gt; <span class="number">5</span>) &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//alert(check('q52830to'));       true</span></div><div class="line">  <span class="comment">//alert(check('q528o'));      false</span></div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
+&lt;h1 id=&quot;正则&quot;&gt;&lt;a href=&quot;#正则&quot; class=&quot;headerlink&quot; title=&quot;正则&quot;&gt;&lt;/a&gt;正则&lt;/h1&gt;&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gu
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>一片叶子落下来</title>
+    <link href="http://topgrd.me/2014/11/26/2014-11-26-leavefallen/"/>
+    <id>http://topgrd.me/2014/11/26/2014-11-26-leavefallen/</id>
+    <published>2014-11-25T16:00:00.000Z</published>
+    <updated>2017-04-26T15:12:54.394Z</updated>
+    
+    <content type="html"><![CDATA[<p>我喜欢的故事，关于生命，关于爱。  </p>
+<a id="more"></a>
+<p>春天已经过去，夏天也这样走了。叶子弗雷迪长大了。他长得又宽又壮，五个叶尖结实挺拔。春天的时候，他还是个初生的嫩芽，从一棵大树树顶的大枝上冒出头来。<br>　　<br>　弗雷迪的身旁有成百上千的叶子，都跟他一模一样——看起来是这样。不过，他很快就发现没有两片叶子是真的一样的，尽管大家都长在同一棵树上。弗雷迪的左边是阿弗烈，右边的叶子是班，他的头顶上是那个可爱的女孩子克莱。他们一起长大，学会了在春风吹拂时跳跳舞，在夏天懒洋洋地晒晒太阳，偶然来一阵清凉的雨就洗个干干净净的澡。<br>　　<br>　弗雷迪最好的朋友是丹尼尔。他是这根树枝上最大的叶子，好象在别的叶子都还没来的时候就先长出来了。弗雷迪还觉得丹尼尔是最聪明的。丹尼尔告诉大家说，他们都是大树的一部分，说他们生长在公园里，说大树有强壮的根深深埋在地底下。早上飞来枝头上唱歌的小鸟、天上的星星月亮和太阳，还有季节的变化，不管什么东西，丹尼尔都有一套道理解释。<br>　　<br>　弗雷迪觉得当叶子真好。他喜欢他的树枝、他轻盈的叶子朋友、他高高挂在天上的家、把他推来推去的风、晒得他暖洋洋的太阳，还有在他身上洒下温柔洁白身影的月亮。<br>　　<br>　夏天特别好。他喜欢漫长炎热的白天，而温暖的黑夜最适合做梦。那年夏天，公园里来了许多人。他们都来到弗雷迪的树下，坐在那里乘凉。<br>　　<br>　丹尼尔告诉他，给人遮荫是叶子的目的之一。“什么叫目的？” 弗雷迪问。“就是存在的理由嘛！” 丹尼尔回答。“让别人感到舒服，这是个存在的理由。为老人遮荫，让他们不必躲在炎热的屋子里，也是个存在的理由。让小孩子们有个凉快的地方可以玩耍，用我们的叶子为树下野餐的人扇风，这些，都是存在的目的啊！”<br>　　<br>　弗雷迪最喜欢老人了。他们总是静静坐在清凉的草地上，几乎动也不动。他们喃喃低语，追忆过去的时光。小孩子也很好玩，虽然他们有时会在树皮上挖洞，或是刻下自己的名字。不过，看到小孩子跑得那么快，那么爱笑，还是很过瘾。<br>　　<br>　但是弗雷迪的夏天很快就过完了。就在十月的一个夜里，夏天突然消失。弗雷迪从来没有这么冷过，所有的叶子都冷得发抖。一层薄薄的白色东西披在他们身上，太阳出来就马上融化，变成晶莹的露水，搞得大家全身湿漉漉的。<br>　　<br>　又是丹尼尔告诉他们：他们刚经历生平第一次降霜。表示秋天到了，冬天也不远了。<br>　　<br>　转瞬之间，整棵树，甚至整个公园，全染上了浓艳的色彩，几乎找不到绿色的叶子。阿弗烈变成深黄色，班成了鲜艳的橙色，克莱儿是火红色，丹尼尔是深紫，弗雷迪自己则是半红半蓝，还夹杂着金黄。多么美丽啊！弗雷迪和他的朋友把整棵树变成如彩虹一般。<br>　　<br>　“我们都在同一棵树上，为什么颜色却各不相同呢？” 弗雷迪问道。“我们一个一个都不一样啊！我们的经历不一样，面对太阳的方向不一样，投下的影子不一样，颜色当然也会不一样。” 丹尼尔用他那“本来就是这样”的一贯口吻回答，还告诉弗雷迪，这个美妙的季节叫做秋天。<br>　　<br>　有一天，发生了奇怪的事。以前，微风会让他们起舞，但是这一天，风儿却扯着叶梗推推拉拉，几乎象是生气了似的。结果，有些叶子从树枝上被扯掉了，卷到空中，刮来刮去，最后轻轻掉落在地面上。<br>　　<br>　所有叶子都害怕了起来。“怎么回事？”他们喃喃地你问我，我问你。“秋天就是这样。” 丹尼尔告诉他们，“时候到了，叶子该搬家了。有些人把这叫做死。”“我们都会死么？” 弗雷迪问。“是的。” 丹尼尔说。“任何东西都会死。无论是大是小是强是弱。我们先做完该做的事。我们体验太阳和月亮、经历风和雨。我们学会跳舞、学会欢笑。然后我们就要死了。”“我不要死！” 弗雷迪斩钉截铁地说。“你会死吗，丹尼尔？”“恩。” 丹尼尔回答，“时候到了，我就死了。”“那是什么时候？” 弗雷迪问。“没有人知道会在哪一天。”丹尼尔回答。<br>　　<br>　弗雷迪发现其他叶子不断在掉落。他想：“一定是他们的时候到了。”他看到有些叶子在掉落前和风挣扎撕打，有些叶子只是把手一放，静静地掉落。<br>　　<br>　很快地，整棵树几乎都空了。“我好怕死。” 弗雷迪向丹尼尔说，“我不知道下面有什么。”<br>　　<br>　“面对不知道的东西，你会害怕，这很自然。” 丹尼尔安慰着他，“但是，春天变夏天的时候，你并不害怕。夏天变秋天的时候，你也不害怕。这些都是自然的变化。为什么要怕死亡的季节呢？”<br>　　<br> “我们的树也会死么？” 弗雷迪问。<br>　　<br>　“总有一天树也会死的。不过还有比树更强的，那就是生命。生命永远都在，我们都是生命的一部分。”<br>　　<br>　“我们死了会到哪儿去呢？”<br>　　<br>　“没有人知道，这是个大秘密！”<br>　　<br>　“春天的时候，我们会回来吗？”<br>　　<br>  “我们可能不会再回来了，但是生命会回来。”<br>　　<br>　“那么这一切有什么意思呢？” 弗雷迪继续问。<br>　　<br>　 “如果我们反正是要掉落、死亡，那为什么还要来这里呢？”<br>　　<br>　丹尼尔用他那“本来就是这样”的一贯口吻回答，“是为了太阳和月亮，是为了大家一起的快乐时光，是为了树荫、老人和小孩子，是为了秋天的色彩，是为了四季，这些还不够吗？”<br>　　<br>　那天下午，在黄昏的金色阳光中，丹尼尔放手了。他毫无挣扎地走了。掉落的时候，他似乎还安详地微笑着。“暂时再见了，弗雷迪。”他说。然后就剩弗雷迪一个了，他是那根树枝仅存的一片叶子。<br>　　<br>　第二天清早，下了头一场雪。雪非常柔软、洁白，但是冷得不得了。那天几乎没有一点阳光，白天也特别短。弗雷迪发现自己的颜色褪了，变得干枯易碎。一直都好冷，雪压在身上感觉好沉重。凌晨，一阵风把弗雷迪带离了他的树枝。一点也不痛，他感觉到自己静静地温和地柔软地飘下。<br>　　<br>　往下掉的时候，他第一次看到了整棵树，多么强壮、多么牢靠的树啊！他很确定这棵树还会活很久，他也知道自己曾经是它生命的一部分，感到很骄傲。<br>　　<br>　弗雷迪落在雪堆上。雪堆很柔软，甚至还很温暖。在这个新位置上他感到前所未有的舒适。他闭上眼睛，睡着了。他不知道，冬天过了春天会来，也不知道雪会融化成水。他不知道，自己看来干枯无用的身体，会和雪水一起，让树更强壮。尤其，他不知道，在大树和土地里沉睡的，是明年春天新叶的生机。   </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;我喜欢的故事，关于生命，关于爱。  &lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>又是一年银杏季</title>
+    <link href="http://topgrd.me/2014/11/20/2014-11-20-feeling_11_20/"/>
+    <id>http://topgrd.me/2014/11/20/2014-11-20-feeling_11_20/</id>
+    <published>2014-11-19T16:00:00.000Z</published>
+    <updated>2017-04-26T15:05:22.895Z</updated>
+    
+    <content type="html"><![CDATA[<p>又是一年银杏季，大学已经过去一半多。</p>
+<a id="more"></a>  
+<p><img src="/assets/themes/Snail/img/xing.jpg" alt="银杏树"><br><img src="/assets/themes/Snail/img/feng.jpg" alt="枫树"><br>  今天是11月20号，最近又是学校一年一度的银杏节，想想我在这里已经是第3次了，我的大学已经过了一大半。大学这3年，有得有失，马上要找实习了，希望能获得一份好的工作。老天保佑，╭(′▽`)╯。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;又是一年银杏季，大学已经过去一半多。&lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>js回调函数</title>
+    <link href="http://topgrd.me/2014/11/18/2014-11-18-js_callback/"/>
+    <id>http://topgrd.me/2014/11/18/2014-11-18-js_callback/</id>
+    <published>2014-11-17T16:00:00.000Z</published>
+    <updated>2017-04-26T15:05:13.343Z</updated>
+    
+    <content type="html"><![CDATA[<p>javascript callback.  </p>
+<a id="more"></a>  
+<p>#js回调函数<br><em>回调函数是把函数当作参数传递给另一个函数，当这个指针被用来调用其所指向的函数时，就称毁掉函数。回调函数不是有该函数的实现方法直接调用，而是在特定的时间或条件发生时由另外的一放调用的，用于对该时间或条件进行响应。</em><br>举个例子<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">aa</span>(<span class="params">bb</span>) </span>&#123;</div><div class="line">  alert(<span class="string">'aa'</span>);</div><div class="line">  bb();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">bb</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  alert(<span class="string">'bb'</span>);</div><div class="line">&#125;</div><div class="line">aa();</div><div class="line">aa(bb);</div></pre></td></tr></table></figure></p>
+<p>运行以上函数，我们发现第一次弹出的是aa，第2次弹出的是aa,bb;<br><code>aa(bb)</code>就是用回调函数.  </p>
+<hr>
+<p>回调函数是异步编程的最基本方法<br>如果有2个函数f1和f2,后者等待前者的执行结果.<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">f1();</div><div class="line">f2();</div></pre></td></tr></table></figure></p>
+<p>如果f1是一个很耗时的任务,可以把f2写成f1的回调函数.  </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">f1</span>(<span class="params">f2</span>) </span>&#123;</div><div class="line">  setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="comment">//f1的代码  </span></div><div class="line">    f2();</div><div class="line">  &#125;, <span class="number">1000</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样执行代码就变成<code>f1(f2)</code><br>采用这种方式，将同步操作变为异步操作,f1不会阻塞程序运行,相当于先执行程序的主要逻辑，将耗时的操作推迟执行.<br>回调函数的缺点是不利于代码的阅读与维护，各个部分之间高度耦合（Coupling），流程会很混乱，而且每个任务只能指定一个回调函数。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;javascript callback.  &lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Markdown语法详解</title>
+    <link href="http://topgrd.me/2014/11/17/2014-11-17-Markdown-stynax/"/>
+    <id>http://topgrd.me/2014/11/17/2014-11-17-Markdown-stynax/</id>
+    <published>2014-11-16T16:00:00.000Z</published>
+    <updated>2017-04-26T15:05:01.224Z</updated>
+    
+    <content type="html"><![CDATA[<p>Markdown 的目标是实现「易读易写」。<br>可读性，无论如何，都是最重要的。一份使用 Markdown 格式撰写的文件应该可以直接以纯文本发布，并且看起来不会像是由许多标签或是格式指令所构成。Markdown 语法受到一些既有 text-to-HTML 格式的影响，包括Setext、atx、Textile、reStructuredText、Grutatext 和 EtText，而最大灵感来源其实是纯文本电子邮件的格式。</p>
+<a id="more"></a>  
+<h1 id="Markdown语法详解"><a href="#Markdown语法详解" class="headerlink" title="Markdown语法详解"></a>Markdown语法详解</h1><h1 id="标题"><a href="#标题" class="headerlink" title="标题"></a>标题</h1><p>Markdown 支持两种标题的语法，类 Setext 和类 atx 形式.  </p>
+<p>类 Setext 形式是用底线的形式，利用 <code>=</code> 最高阶标题）和 <code>-</code>（第二阶标题），例如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">H1</div><div class="line">=======</div><div class="line">H2</div><div class="line">-----</div></pre></td></tr></table></figure></p>
+<p>任何数量的=和-都是可以的.</p>
+<p>类 Atx 形式则是在行首插入 1 到 6 个 <code>#</code> ，对应到标题 1 到 6 阶，例如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"># H1  </div><div class="line">## H2  </div><div class="line">...  </div><div class="line">###### H6</div></pre></td></tr></table></figure></p>
+<h2 id="区块引用-Blockquotes"><a href="#区块引用-Blockquotes" class="headerlink" title="区块引用 Blockquotes"></a>区块引用 Blockquotes</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; some tingsome tingsome tingsome tingsome tingsome tingsome </div><div class="line">tingsome tingsome tingsome tingsome ting</div></pre></td></tr></table></figure>
+<p>或者<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; some tingsome tingsome ting</div><div class="line">&gt; some tingsome ting2313</div></pre></td></tr></table></figure></p>
+<p>效果</p>
+<blockquote>
+<p>some tingsome ting</p>
+</blockquote>
+<h2 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h2><p>无序列表使用星号、加号或是减号作为列表标记：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">* apple  </div><div class="line">* banana  </div><div class="line">* tomato</div></pre></td></tr></table></figure></p>
+<p>效果  </p>
+<ul>
+<li>apple</li>
+<li>banana</li>
+<li>tomato  </li>
+</ul>
+<p>有序列表则使用数字接着一个英文句点:<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">1. apple</div><div class="line">2. banana</div><div class="line">3. tomato</div></pre></td></tr></table></figure></p>
+<p>效果</p>
+<ol>
+<li>apple</li>
+<li>banana</li>
+<li>tomato</li>
+</ol>
+<h2 id="代码区块"><a href="#代码区块" class="headerlink" title="代码区块"></a>代码区块</h2><p>Markdown 中建立代码区块很简单，只需要按3个`即可，例如<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">funtion add(x, y) &#123;</div><div class="line">    <span class="keyword">return</span> x + y</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="分割线"><a href="#分割线" class="headerlink" title="分割线"></a>分割线</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">* * *</div><div class="line"></div><div class="line">***</div><div class="line"></div><div class="line">*****</div><div class="line"></div><div class="line">- - -</div><div class="line"></div><div class="line">---------------------------------------</div></pre></td></tr></table></figure>
+<p>得到  </p>
+<hr>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p><code>[this is a link](http://github.com/topgrd)</code><br>产生<br><a href="http://github.com/topgrd" target="_blank" rel="external">this is a link</a>  </p>
+<p>如果你是要链接到同样主机的资源，你可以使用相对路径：  </p>
+<p><code>See my [About](/about/) page for details</code><br>如果你还想要加上链接的 title 文字，只要在网址后面，用双引号把 title 文字包起来即可，例如：<br><code>[this is a link](http://github.com/topgrd/ &quot;dasda&quot;)</code><br> 隐式链接标记功能让你可以省略指定链接标记，这种情形下，链接标记会视为等同于链接文字，要用隐式链接标记只要在链接文字后面加上一个空的方括号，如果你要让 “[Google]” 链接到 google.com，你可以简化成：<br> <code>[Google]: http://google.com</code><br>链接的定义可以放在文件中的任何一个地方，我比较偏好直接放在链接出现段落的后面，你也可以把它放在文件最后面，就像是注解一样.<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[Google]: http://google.com</div><div class="line">[id]: <span class="tag">&lt;<span class="name">http:</span>//<span class="attr">example.com</span>/&gt;</span>  "Optional Title Here"</div></pre></td></tr></table></figure></p>
+<p>##强调<br>Markdown 使用星号（*）和底线（_）作为标记强调字词的符号，被 * 或 _ 包围的字词会被转成用 <em> 标签包围，用两个 * 或 _ 包起来的话，则会被转成 <strong>，例如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">*single asterisks*</div><div class="line">_single underscores_</div><div class="line">**double asterisks**</div><div class="line">__double underscores__</div></pre></td></tr></table></figure></strong></em></p>
+<p>表现为  </p>
+<p><em>single asterisks</em></p>
+<p><em>single underscores</em></p>
+<p><strong>double asterisks</strong></p>
+<p><strong>double underscores</strong>```</p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>如果要标记一小段行内代码，你可以用反引号把它包起来（`），例如：<br><code>Use the `printf()`function</code><br>会表现<br>Use the <code>printf()</code>function  </p>
+<h2 id="图片"><a href="#图片" class="headerlink" title="图片"></a>图片</h2><p>行内式<br><code>![Alt text](/path/to/img.jpg)</code><br><code>![Alt text](/path/to/img.jpg &quot;Optional title&quot;)</code><br>例<br><img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1493227960015&amp;di=9c93926c4e4880f3978601bd76df0535&amp;imgtype=0&amp;src=http%3A%2F%2Fi0.hdslb.com%2Fbfs%2Farchive%2Fa8660e7c4e07769471def66bfe71ff2eed5b51a7.jpg" alt="photo"><br>参考式<br><code>![Alt text][id]</code><br>id的定义<br><code>[id]: url/to/img &quot;option title attribute&quot;</code><br>到目前为止， Markdown 还没有办法指定图片的宽高，如果你需要的话，你可以使用普通的 <code>&lt;img&gt;</code> 标签。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Markdown 的目标是实现「易读易写」。&lt;br&gt;可读性，无论如何，都是最重要的。一份使用 Markdown 格式撰写的文件应该可以直接以纯文本发布，并且看起来不会像是由许多标签或是格式指令所构成。Markdown 语法受到一些既有 text-to-HTML 格式的影响，包括Setext、atx、Textile、reStructuredText、Grutatext 和 EtText，而最大灵感来源其实是纯文本电子邮件的格式。&lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>前端小知识</title>
+    <link href="http://topgrd.me/2014/11/16/2014-11-16-CSS_display/"/>
+    <id>http://topgrd.me/2014/11/16/2014-11-16-CSS_display/</id>
+    <published>2014-11-15T16:00:00.000Z</published>
+    <updated>2017-04-26T15:04:38.783Z</updated>
+    
+    <content type="html"><![CDATA[<p>前端的小知识，看看你知道不知道.</p>
+<a id="more"></a>
+<h1 id="前端知识"><a href="#前端知识" class="headerlink" title="前端知识"></a>前端知识</h1><h2 id="css-hack"><a href="#css-hack" class="headerlink" title="css hack"></a>css hack</h2><p>IE6 hack<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">*<span class="selector-tag">background-color</span>:<span class="selector-id">#dddd00</span>;</div></pre></td></tr></table></figure></p>
+<p>IE7 hack</p>
+<p><code>*background-color:#dddd00;</code></p>
+<p>IE8 hack<br><code>background-color:red \0;</code>  </p>
+<p>IE9 hack<br><code>background-color:blue \9\0;</code>  </p>
+<p>#浏览器是如何判断元素是否匹配某个 CSS 选择器?  </p>
+<p>比如<code>#divBox p span.red{color:red;}</code>，浏览器的查找顺序如下：</p>
+<ol>
+<li>先查找html中所有class=’red’的span元素</li>
+<li>再查找其父辈元素中是否有p元素</li>
+<li>判断p的父元素中是否有id为divBox的div元素，如果都存在则匹配上。</li>
+</ol>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">&lt;style&gt;</div><div class="line">DIV#divBox p span.red&#123;color:red;&#125;</div><div class="line">&lt;/style&gt;</div><div class="line">&lt;body&gt;</div><div class="line">&lt;div id="divBox"&gt;</div><div class="line">&lt;p&gt;&lt;span&gt;s1&lt;/span&gt;&lt;/p&gt;</div><div class="line">&lt;p&gt;&lt;span&gt;s2&lt;/span&gt;&lt;/p&gt;</div><div class="line">&lt;p&gt;&lt;span&gt;s3&lt;/span&gt;&lt;/p&gt;</div><div class="line">&lt;p&gt;&lt;span class='red'&gt;s4&lt;/span&gt;&lt;/p&gt;</div><div class="line">&lt;/div&gt;</div><div class="line">&lt;/body&gt;</div></pre></td></tr></table></figure>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;前端的小知识，看看你知道不知道.&lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>前端收藏</title>
+    <link href="http://topgrd.me/2014/10/25/2014-10-25-qianduancollection/"/>
+    <id>http://topgrd.me/2014/10/25/2014-10-25-qianduancollection/</id>
+    <published>2014-10-24T16:00:00.000Z</published>
+    <updated>2017-04-26T15:09:06.425Z</updated>
+    
+    <content type="html"><![CDATA[<p>收藏的一些和前端有关的信息  </p>
+<a id="more"></a>  
+<p>##专注前端的一些blog：<br>CSS森林(CSS Forest)：无需多解释了。<br><a href="http://www.cssforest.org/blog/index.php?atom=1" target="_blank" rel="external">http://www.cssforest.org/blog/index.php?atom=1</a></p>
+<p>PuterJam’s Blog：牛人，tx前端库的头头。<br><a href="http://www.pjhome.net/feed.asp" target="_blank" rel="external">http://www.pjhome.net/feed.asp</a></p>
+<p>彬Go：人人网一位高产作者。<br><a href="http://blog.bingo929.com/feed" target="_blank" rel="external">http://blog.bingo929.com/feed</a></p>
+<p>支付宝前端开发车间：看名字就懂了<br><a href="http://ued.alipay.com/wd/feed/" target="_blank" rel="external">http://ued.alipay.com/wd/feed/</a></p>
+<p>ria之家–RIA三部曲：jquery、ext、flex：淘宝几位作者共同撰写的blog，同样十分高产<br><a href="http://www.36ria.com/feed" target="_blank" rel="external">http://www.36ria.com/feed</a></p>
+<p>幸福收藏夹：sofish的，不多说了。<br><a href="http://feed.sofish.de" target="_blank" rel="external">http://feed.sofish.de</a></p>
+<p>为之漫笔：李松峰老师，高级js编程等书的译者<br><a href="http://www.cn-cuckoo.com/feed" target="_blank" rel="external">http://www.cn-cuckoo.com/feed</a></p>
+<p>前端观察：学习过程中大量搜索结果都来自于此<br><a href="http://www.qianduan.net/feed" target="_blank" rel="external">http://www.qianduan.net/feed</a></p>
+<p>WEB前端开发：愚人码头的站，基本上也是一个教程基地<br><a href="http://www.css88.com/feed" target="_blank" rel="external">http://www.css88.com/feed</a></p>
+<p>CssRain-前端技术 ：又一个教程基地<br><a href="http://www.cssrain.cn/?feed=rss2" target="_blank" rel="external">http://www.cssrain.cn/?feed=rss2</a></p>
+<p>VILIC’s Blog：一员小将，功力不俗<br><a href="http://www.vilic.info/blog/feed" target="_blank" rel="external">http://www.vilic.info/blog/feed</a></p>
+<p>老赵：不解释了，全能，因为搞了jscex，所以可以把他算到前端行列来。<br><a href="http://blog.zhaojie.me/rss" target="_blank" rel="external">http://blog.zhaojie.me/rss</a></p>
+<p>博客园-三生石上：亦是js领域牛人，耳熟能详的js秘密花园就是其译作。<br><a href="http://www.cnblogs.com/sanshi/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/sanshi/rss.aspx</a></p>
+<p>博客园-Novice Doodle from Gray Zhang &amp; 宅居：他有两个blog，百度的前端大牛<br><a href="http://www.otakustay.com/feed/" target="_blank" rel="external">http://www.otakustay.com/feed/</a><br><a href="http://www.cnblogs.com/GrayZhang/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/GrayZhang/rss.aspx</a>  </p>
+<p>阮一峰：由于也有很多关于前端的blog，姑且也算他是前端人士吧。<br><a href="http://feeds.feedburner.com/ruanyifeng" target="_blank" rel="external">http://feeds.feedburner.com/ruanyifeng</a>    <a href="http://typeof.net：语言开发层面上的js博客，写手包括老赵，" target="_blank" rel="external">http://typeof.net：语言开发层面上的js博客，写手包括老赵，</a> BELLEVE INVIS是主要作者，大牛，写js编译器的  </p>
+<p><a href="http://typeof.net/feed/hax的技术部落格" target="_blank" rel="external">http://typeof.net/feed/hax的技术部落格</a></p>
+<p><a href="http://hax.iteye.com/rssaimingoo的专栏" target="_blank" rel="external">http://hax.iteye.com/rssaimingoo的专栏</a>  </p>
+<p>爱民老师~<br><a href="http://blog.csdn.net/aimingoo/rss.aspx博客园-Ruby&#39;s" target="_blank" rel="external">http://blog.csdn.net/aimingoo/rss.aspx博客园-Ruby&#39;s</a> Louvre：司徒正美，除了众多博文外，最近亦有mass Framework 释出</p>
+<p><a href="http://www.cnblogs.com/rubylouvre/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/rubylouvre/rss.aspx</a><br>博客园-Franky：又一牛~<br><a href="http://www.cnblogs.com/_franky/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/_franky/rss.aspx</a></p>
+<p>##此外，国内著名公司的一些前端（或前端相关）博客也非常值得订阅，譬如淘宝UED，百度MUX，腾讯CDC等等。<br>分享一些GR订阅的FEED<br><a href="http://Gracecode.com" target="_blank" rel="external">http://Gracecode.com</a><br><a href="http://feeds.gracecode.com/gracecode/" target="_blank" rel="external">http://feeds.gracecode.com/gracecode/</a></p>
+<p>Huang Jie Blog .Com-前端开发<br><a href="http://www.huangjieblog.com/?feed=rss2" target="_blank" rel="external">http://www.huangjieblog.com/?feed=rss2</a></p>
+<p>i在云端<br><a href="http://kinvix.kdv.cn/blog/?feed=rss2" target="_blank" rel="external">http://kinvix.kdv.cn/blog/?feed=rss2</a></p>
+<p>Koubei UED<br><a href="http://ued.koubei.com/?feed=rss2" target="_blank" rel="external">http://ued.koubei.com/?feed=rss2</a>  </p>
+<p>limu的砖篮儿<br><a href="http://limu.iteye.com/rss" target="_blank" rel="external">http://limu.iteye.com/rss</a></p>
+<p>MED<br><a href="http://ued.alimama.com/feed/" target="_blank" rel="external">http://ued.alimama.com/feed/</a></p>
+<p>MephoBox RSS<br><a href="http://box.mepholio.com/rss_feed" target="_blank" rel="external">http://box.mepholio.com/rss_feed</a></p>
+<p>PlanABC - 怿飞’s Blog<br><a href="http://feed.planabc.net/" target="_blank" rel="external">http://feed.planabc.net/</a></p>
+<p>RIAMeeting - 瑞研社区 - Flex培训,Flex教程,Flash教程,ActionScript3,AS3,AIR - RIAMeeting为大家创造更好的交流平台<br><a href="http://www.riameeting.com/rss.xml" target="_blank" rel="external">http://www.riameeting.com/rss.xml</a></p>
+<p>ria之家<br><a href="http://feed.feedsky.com/36ria?source=ignitionfork" target="_blank" rel="external">http://feed.feedsky.com/36ria?source=ignitionfork</a></p>
+<p>Taobao UED Team<br><a href="http://ued.taobao.com/blog/feed/" target="_blank" rel="external">http://ued.taobao.com/blog/feed/</a></p>
+<p>UED TEAM<br><a href="http://www.http://ued163.com/?feed=rss2" target="_blank" rel="external">http://www.http://ued163.com/?feed=rss2</a></p>
+<p>WEB前端开发<br><a href="http://www.http://css88.com/feed" target="_blank" rel="external">http://www.http://css88.com/feed</a></p>
+<p>YAHOO!China UED<br><a href="http://www.uedblog.com/?feed=rss2前端开发-武方博" target="_blank" rel="external">http://www.uedblog.com/?feed=rss2前端开发-武方博</a><br><a href="http://feed.feedsky.com/wfb927" target="_blank" rel="external">http://feed.feedsky.com/wfb927</a></p>
+<p>前端技术<br><a href="http://www.cssrain.cn/feed.asp" target="_blank" rel="external">http://www.cssrain.cn/feed.asp</a></p>
+<p>前端观察<br><a href="http://feeds2.feedburner.com/qianduannet" target="_blank" rel="external">http://feeds2.feedburner.com/qianduannet</a>  </p>
+<p>阿里巴巴（中文站）用户体验设计部博客<br><a href="http://www.aliued.cn/feed" target="_blank" rel="external">http://www.aliued.cn/feed</a>  </p>
+<p>陈成的博客<br><a href="http://www.chencheng.org/blog/feed/" target="_blank" rel="external">http://www.chencheng.org/blog/feed/</a>  </p>
+<p>BearRui(AK-47) 的Blog<br><a href="http://feed.feedsky.com/BearRui?source=ignitionfork" target="_blank" rel="external">http://feed.feedsky.com/BearRui?source=ignitionfork</a>  </p>
+<p><a href="http://CNodeJS.ORG" target="_blank" rel="external">http://CNodeJS.ORG</a>  </p>
+<p><a href="http://feed.feedsky.com/nodejs" target="_blank" rel="external">http://feed.feedsky.com/nodejs</a></p>
+<p>##前端书籍：<br>有哪些关于包括 JavaScript、CSS 和 DOM 在内的网页开发技术的值得推荐的书籍？<br><a href="http://www.zhihu.com/question/19809484" target="_blank" rel="external">http://www.zhihu.com/question/19809484</a>  </p>
+<p>关于 CSS 设计，有什么书比较好？<a href="http://www.zhihu.com/question/19742348" target="_blank" rel="external">http://www.zhihu.com/question/19742348</a></p>
+<p>技术细节：<br>JavaScript方面：</p>
+<p>JavaScript 里的闭包是什么？应用场景有哪些？<a href="http://www.zhihu.com/question/19554716" target="_blank" rel="external">http://www.zhihu.com/question/19554716</a></p>
+<p>JavaScript 中 undefined 与 undeclared 之间的区别是什么？<a href="http://www.zhihu.com/question/19966545" target="_blank" rel="external">http://www.zhihu.com/question/19966545</a></p>
+<p>JavaScript中圆括号() 和 方括号[] 的特殊用法疑问？<a href="http://www.zhihu.com/question/20127472" target="_blank" rel="external">http://www.zhihu.com/question/20127472</a></p>
+<p>国内有哪些靠谱的 Javascript 库 CDN可用？<a href="http://www.zhihu.com/question/20227463" target="_blank" rel="external">http://www.zhihu.com/question/20227463</a></p>
+<p>为什么很多网站在 JavaScript 脚本中都用简单的字母表示变量？<a href="http://www.zhihu.com/question/19717671" target="_blank" rel="external">http://www.zhihu.com/question/19717671</a></p>
+<p>html方面：</p>
+<p>.htm 与 .html 两种文件格式（扩展名）的区别在哪里？<a href="http://www.zhihu.com/question/19718085" target="_blank" rel="external">http://www.zhihu.com/question/19718085</a></p>
+<p>制作前端页面的时候，使用 &nbsp; 当作空格和使用 white-space: pre 的原生空格有什么区别？哪个更好一些？<a href="http://www.zhihu.com/question/19895400#" target="_blank" rel="external">http://www.zhihu.com/question/19895400#</a></p>
+<p>为什么不能在 EDM 模版中使用 DIV ？<a href="http://www.zhihu.com/question/20168819" target="_blank" rel="external">http://www.zhihu.com/question/20168819</a></p>
+<p>CSS 方面：</p>
+<p>命名 CSS 的类或 id 时单词间如何连接？<a href="http://www.zhihu.com/question/19748433" target="_blank" rel="external">http://www.zhihu.com/question/19748433</a></p>
+<p>如何解决外边距叠加的问题？<a href="http://www.zhihu.com/question/19823139" target="_blank" rel="external">http://www.zhihu.com/question/19823139</a></p>
+<p>在 CSS 布局中，用 float 好还是用 position 好？分别有什么优势？<a href="http://www.zhihu.com/question/19588854" target="_blank" rel="external">http://www.zhihu.com/question/19588854</a></p>
+<p>你如何理解 HTML5 的 section？会在什么场景使用？为什么这些场景使用 section 而不是 div？<br><a href="http://www.zhihu.com/question/20227599" target="_blank" rel="external">http://www.zhihu.com/question/20227599</a></p>
+<p>有一 li 元素其中有中文和英文，怎么分别设置他们的字体样式？<a href="http://www.zhihu.com/question/19977292" target="_blank" rel="external">http://www.zhihu.com/question/19977292</a></p>
+<p>CSS 中 block-level boxes、containing block、block formatting context 三者之间的区别和联系是怎样的？<a href="http://www.zhihu.com/question/20086234" target="_blank" rel="external">http://www.zhihu.com/question/20086234</a></p>
+<p>怎样可以很好地保证网页的浏览器兼容性？<a href="http://www.zhihu.com/question/19736007" target="_blank" rel="external">http://www.zhihu.com/question/19736007</a></p>
+<p>##前端工具  </p>
+<p>写 JavaScript 时的 IDE 或编辑器选择有哪些好的推荐？<a href="http://www.zhihu.com/question/19606319" target="_blank" rel="external">http://www.zhihu.com/question/19606319</a></p>
+<p>Notepad++ 有哪些适用于前端开发的插件？ <a href="http://www.zhihu.com/question/19998255" target="_blank" rel="external">http://www.zhihu.com/question/19998255</a></p>
+<p>用 Dreamweaver 写 CSS 代码很有效率，但为什么还有很多人喜欢用 Notepad++ 之类的工具？<br><a href="http://www.zhihu.com/question/19587831" target="_blank" rel="external">http://www.zhihu.com/question/19587831</a></p>
+<p>你觉得在前端开发中值得推荐的常用工具有哪些？<a href="http://www.zhihu.com/question/19561454" target="_blank" rel="external">http://www.zhihu.com/question/19561454</a></p>
+<p>前端工程师都有用哪些比较靠谱的小工具啊？ <a href="http://www.zhihu.com/question/20241338" target="_blank" rel="external">http://www.zhihu.com/question/20241338</a></p>
+<p>有哪些工具可以将 CSS 文件中的属性按照一定的顺序进行排列？<a href="http://www.zhihu.com/question/19990596" target="_blank" rel="external">http://www.zhihu.com/question/19990596</a></p>
+<p>有哪些比较好 CSS 简写（压缩）工具？<a href="http://www.zhihu.com/question/19612973" target="_blank" rel="external">http://www.zhihu.com/question/19612973</a></p>
+<p>什么是 Twitter Bootstrap？<a href="http://www.zhihu.com/question/19821825" target="_blank" rel="external">http://www.zhihu.com/question/19821825</a></p>
+<p>##前端学习 </p>
+<p>入门:<br>若想学 HTML，应从哪里入手？<a href="http://www.zhihu.com/question/19753196" target="_blank" rel="external">http://www.zhihu.com/question/19753196</a></p>
+<p>零基础开始学 Web 前端开发，有什么建议吗？<a href="http://www.zhihu.com/question/19637373" target="_blank" rel="external">http://www.zhihu.com/question/19637373</a></p>
+<p>零基础的网站开发初学者如何系统的学习？<a href="http://www.zhihu.com/question/19834302" target="_blank" rel="external">http://www.zhihu.com/question/19834302</a></p>
+<p>如何帮助前端新人入门和提高？<a href="http://www.zhihu.com/question/19862294" target="_blank" rel="external">http://www.zhihu.com/question/19862294</a></p>
+<p>进阶：<br>如何循序渐进有效学习 JavaScript？<a href="http://www.zhihu.com/question/19713563" target="_blank" rel="external">http://www.zhihu.com/question/19713563</a></p>
+<p>面对变化莫测的 CSS，我该怎么办？<a href="http://www.zhihu.com/question/19653139" target="_blank" rel="external">http://www.zhihu.com/question/19653139</a></p>
+<p>非计算机专业，半路出家，以前做 UI ，现在想改前端，学习 JS 过程中遇到瓶颈了，如何突破？<a href="http://www.zhihu.com/question/19660847" target="_blank" rel="external">http://www.zhihu.com/question/19660847</a></p>
+<p>一名合格的前端工程师的知识结构是怎样的？<a href="http://www.zhihu.com/question/19588629" target="_blank" rel="external">http://www.zhihu.com/question/19588629</a><br>高级：</p>
+<p>怎样成长为一个优秀的 Web 前端开发工程师？<a href="http://www.zhihu.com/question/19554845" target="_blank" rel="external">http://www.zhihu.com/question/19554845</a></p>
+<p><a href="http://w3.org" target="_blank" rel="external">http://w3.org</a> 结构复杂，信息量大，新人从哪里入手比较好？<a href="http://www.zhihu.com/question/20193711" target="_blank" rel="external">http://www.zhihu.com/question/20193711</a></p>
+<p>怎么样才算是精通 JavaScript？<a href="http://www.zhihu.com/question/19657253" target="_blank" rel="external">http://www.zhihu.com/question/19657253</a></p>
+<p>前端就业：<br>好的 Web 前端年薪会有多少？<a href="http://www.zhihu.com/question/19723850" target="_blank" rel="external">http://www.zhihu.com/question/19723850</a></p>
+<p>Web 前端开发岗位，该选择百度还是腾讯？<a href="http://www.zhihu.com/question/19886046" target="_blank" rel="external">http://www.zhihu.com/question/19886046</a></p>
+<p>淘宝 UED 前端、腾讯脚本开发、豆瓣前端开发，应该如何在这几个工作之间选择？<a href="http://www.zhihu.com/question/20084964" target="_blank" rel="external">http://www.zhihu.com/question/20084964</a></p>
+<p>淘宝 UED 前端团队究竟好不好？值得去吗？<a href="http://www.zhihu.com/question/20099712" target="_blank" rel="external">http://www.zhihu.com/question/20099712</a></p>
+<p>前端招聘：<br>如何面试前端工程师？<a href="http://www.zhihu.com/question/19568008" target="_blank" rel="external">http://www.zhihu.com/question/19568008</a></p>
+<p>为什么前端工程师很难找？<a href="http://www.zhihu.com/question/19923687" target="_blank" rel="external">http://www.zhihu.com/question/19923687</a></p>
+<p>如何才能招聘到好的 web 前端人才？<a href="http://www.zhihu.com/question/19651775" target="_blank" rel="external">http://www.zhihu.com/question/19651775</a></p>
+<p>有哪些经典的 Web 前端或者 JavaScript 面试笔试题？<a href="http://www.zhihu.com/question/19841848" target="_blank" rel="external">http://www.zhihu.com/question/19841848</a></p>
+<p>如何解答这道 JavaScript 面试题？<a href="http://www.zhihu.com/question/19747496" target="_blank" rel="external">http://www.zhihu.com/question/19747496</a></p>
+<p>前端漫谈：<br>前端工程师的价值体现在哪里？<a href="http://www.zhihu.com/question/19589966" target="_blank" rel="external">http://www.zhihu.com/question/19589966</a></p>
+<p>Web 前端工程师这一职业在未来行业需求和发展怎样？<a href="http://www.zhihu.com/question/19580161" target="_blank" rel="external">http://www.zhihu.com/question/19580161</a></p>
+<p>如何改善国内前端开发行业的尴尬地位？<a href="http://www.zhihu.com/question/19927065" target="_blank" rel="external">http://www.zhihu.com/question/19927065</a></p>
+<p>一些人瞧不起 jQuery 的理由是什么？<a href="http://www.zhihu.com/question/19969737" target="_blank" rel="external">http://www.zhihu.com/question/19969737</a></p>
+<p>Java 和 JavaScript 是雷锋和雷峰塔的区别，这一说法是怎么来的？<a href="http://www.zhihu.com/question/19598890" target="_blank" rel="external">http://www.zhihu.com/question/19598890</a></p>
+<p>Web 前端和后端工程师的具体职责分别是怎样的？<a href="http://www.zhihu.com/question/19911595" target="_blank" rel="external">http://www.zhihu.com/question/19911595</a></p>
+<p>前端工程师和网页重构工程师二者有什么区别和联系？<a href="http://www.zhihu.com/question/19858246" target="_blank" rel="external">http://www.zhihu.com/question/19858246</a></p>
+<p>做前端开发必需要掌握切图技能吗？<a href="http://www.zhihu.com/question/19769761" target="_blank" rel="external">http://www.zhihu.com/question/19769761</a></p>
+<p>##技术细节   </p>
+<p>JavaScript 中应该用”==”还是”===”？ <a href="http://www.zhihu.com/question/20348948" target="_blank" rel="external">http://www.zhihu.com/question/20348948</a></p>
+<p>JavaScript 中，num = num || 1 这种写法有哪些优缺点？ <a href="http://www.zhihu.com/question/20377595" target="_blank" rel="external">http://www.zhihu.com/question/20377595</a></p>
+<p>使用 Node.js 的优势和劣势都有哪些？有大公司用吗？ <a href="http://www.zhihu.com/question/19653241" target="_blank" rel="external">http://www.zhihu.com/question/19653241</a></p>
+<p>LABjs、RequireJS、SeaJS 哪个最好用？为什么？ <a href="http://www.zhihu.com/question/20342350" target="_blank" rel="external">http://www.zhihu.com/question/20342350</a></p>
+<p>一个 ul 里有若干 li，点击 li 时能方便地知道这是 ul 中的第几个 li 吗？ <a href="http://www.zhihu.com/question/20322273" target="_blank" rel="external">http://www.zhihu.com/question/20322273</a></p>
+<p>怎样在各个浏览器下使用 JavaScript 或者 CSS 控制去除 input 和 button 的虚线？<a href="http://www.zhihu.com/question/19920225" target="_blank" rel="external">http://www.zhihu.com/question/19920225</a></p>
+<p>JavaScript 语句后应该加分号么？ <a href="http://www.zhihu.com/question/20298345" target="_blank" rel="external">http://www.zhihu.com/question/20298345</a></p>
+<p>GitHub 有哪些讨人喜欢的原因？ <a href="http://www.zhihu.com/question/19776649" target="_blank" rel="external">http://www.zhihu.com/question/19776649</a></p>
+<p>A &amp;&amp; B || C 效率比 A ? B : C 高？#JavaScript <a href="http://www.zhihu.com/question/20293486" target="_blank" rel="external">http://www.zhihu.com/question/20293486</a></p>
+<p>有哪些 JS 调试技巧？ <a href="http://www.zhihu.com/question/20260762" target="_blank" rel="external">http://www.zhihu.com/question/20260762</a></p>
+<p>制作前端页面的时候，使用 &nbsp; 当作空格和使用 white-space: pre 的原生空格有什么区别？哪个更好一些？ <a href="http://www.zhihu.com/question/19895400" target="_blank" rel="external">http://www.zhihu.com/question/19895400</a></p>
+<p>前端招聘：<br>大公司面试前端开发类的职位时，更看重的是什么？ <a href="http://www.zhihu.com/question/19770923" target="_blank" rel="external">http://www.zhihu.com/question/19770923</a></p>
+<p>前端就业：<br>只专注于 JavaScript，好就业吗？有发展前景吗 <a href="http://www.zhihu.com/question/20149600" target="_blank" rel="external">http://www.zhihu.com/question/20149600</a></p>
+<p>前端漫谈：<br>HTML5 标准分裂会有什么影响? <a href="http://www.zhihu.com/question/20374574" target="_blank" rel="external">http://www.zhihu.com/question/20374574</a></p>
+<p>jQuery 宣布在未来的版本将不支持 IE6/7/8 是否明智？ <a href="http://www.zhihu.com/question/20322923" target="_blank" rel="external">http://www.zhihu.com/question/20322923</a></p>
+<p>Java 和 JavaScript 是什么关系？ <a href="http://www.zhihu.com/question/19913979" target="_blank" rel="external">http://www.zhihu.com/question/19913979</a></p>
+<p>国内有人或者公司用 LESS 写过 CSS 吗？ <a href="http://www.zhihu.com/question/19823925" target="_blank" rel="external">http://www.zhihu.com/question/19823925</a></p>
+<p>前端工程师，如何更顺畅的和后端工程师合作？ <a href="http://www.zhihu.com/question/20365599" target="_blank" rel="external">http://www.zhihu.com/question/20365599</a></p>
+<p>为什么很多国内公司不使用 jQuery 等开源 JS 框架（库），而选择自己开发 JavaScript 框架？<a href="http://www.zhihu.com/question/20099586" target="_blank" rel="external">http://www.zhihu.com/question/20099586</a></p>
+<p>Douglas Crockford 的《JavaScript 语言精粹》中有哪些观点是有争议的？ <a href="http://www.zhihu.com/question/20292563" target="_blank" rel="external">http://www.zhihu.com/question/20292563</a></p>
+<p>为什么有人说前端开发水很深，工作量有时比后台还多？ <a href="http://www.zhihu.com/question/20249919" target="_blank" rel="external">http://www.zhihu.com/question/20249919</a></p>
+<p>如何用通俗易懂的语言解释脚本（script）是什么？ <a href="http://www.zhihu.com/question/19901542" target="_blank" rel="external">http://www.zhihu.com/question/19901542</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;收藏的一些和前端有关的信息  &lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+</feed>

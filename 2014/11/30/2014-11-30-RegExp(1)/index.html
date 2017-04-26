@@ -1,0 +1,62 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 正则表达式(一) · Who am i?</title><meta name="description" content="正则表达式(一) - topgrd"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://topgrd.me/atom.xml" title="Who am i?"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/leezhuo" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/topgrd" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">正则表达式(一)</h1><div class="post-info">Nov 30, 2014</div><div class="post-content"><p>最近才发现原来我一直没学正则,之前学js一直跳过了这块,这两天赶紧补上.</p>
+<a id="more"></a>  
+<pre><code>var box=/box/ig;    //i代表不区分大小写 g代表全局匹配 还有个m表示多行匹配
+var str=&apos;BOX&apos;;
+//alert(box.test(str))
+var dd=&apos;this is a Box!that is aa box!&apos;;
+//alert(box.test(dd))    //true
+//alert(dd.replace(box,&apos;top&apos;)); // 替换  this is a top!that is aa top!
+//alert(dd.search(box));  //查找box第一次出现的位置     10
+//alert(dd.match(box).length)   //匹配到2次
+box.test(dd);
+//alert(RegExp.input);        //this is a Box!that is aa box! 返回被查找的字符串
+//alert(RegExp.leftContext)  //返回第一次匹配到的左边的字符串
+//alert(RegExp.rightContext)  //返回第一次匹配到的右边的字符串
+var dox = /b.x/ig;                    //true  .匹配任意字符
+//alert(dox.test(dd))
+
+var pa=/bo*x/i;   //*表示匹配任意多个o
+var st = &apos;booox&apos;;
+//alert(pa.test(st))    true
+var pad=/bo{2,4}x/;  //匹配2~4个o
+//alert(pad.test(st))            true
+
+var pp=/[a-z]o{3}x/;        //匹配3次o    
+//alert(pp.test(st))        true
+var pat=/b[^0-9a-z]x/;
+var ss=&apos;b0x&apos;;
+//alert(pat.test(ss))//里面的^表示非
+var pare=/^[a-z]ox/;//外面的^表示行首匹配
+var xxx=&apos;bbox&apos;,xx2=&apos;box&apos;;
+//alert(pare.test(xxx));
+//alert(pare.test(xx2));
+var ppp=/b\wx/;                //\w表示匹配字母数字下划线_即[a-zA-Z0-9_]
+//alert(ppp.test(ss));
+var lol=/b\Wx/;                //\W表示匹配非字母数字下划线_即[^a-zA-Z0-9_]
+var so=&apos;b-x&apos;;
+//alert(lol.test(so))
+var og=/^google$/;    //$行尾匹配 og表示前面后面都没有，完全匹配。
+var gg=&apos;google&apos;;    
+//alert(og.test(gg));
+var dd=/google\b/;   // \b表示十否到达边界
+//alert(dd.test(gg))；
+var huo=/google||baidu/; //|表示或
+var ci=/(google){2,4}/;   //()表示分组 {}次数
+var googles=&apos;googlegooglegoogle&apos;;
+//alert(huo.test(googles));
+var paten=/g(.*)e/;
+paten.test(gg);
+//alert(RegExp.$1);    //RegExp.$1表示获取模式中第一个分组对应的字符串
+document.write(gg.replace(paten,&apos;this is a &lt;strong&gt;$1&lt;/strong&gt;&lt;br&gt;&apos;));
+var pard=/(.*)\s(.*)/;
+var stt=&apos;google baidu&apos;;
+document.write(stt.replace(pard,&apos;$2 $1&apos;));
+
+var str5=&apos;3hello3 3hello3 3hello3&apos;;        //贪婪模式
+var paten2=/3(.*)3/;
+//alert(str5.replace(paten2,&apos;$1&apos;));
+var paten3=/3(.*?)3/g;                //惰性模式
+//alert(str5.replace(paten3,&apos;$1&apos;));
+var paten4=/3[^8]3/;
+//alert(str5.replace(paten3,&apos;$1&apos;));
+</code></pre></div></article></div></main><footer><div class="paginator"><a href="/2014/11/26/2014-11-26-leavefallen/" class="prev">PREV</a><a href="/2014/11/30/2014-11-30-RegExp(2)/" class="next">NEXT</a></div><div class="copyright"><p>© 2014 - 2017 <a href="http://topgrd.me">topgrd</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script></body></html>
