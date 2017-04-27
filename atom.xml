@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://topgrd.me/"/>
-  <updated>2017-04-26T15:03:54.833Z</updated>
+  <updated>2017-04-27T02:07:06.101Z</updated>
   <id>http://topgrd.me/</id>
   
   <author>
@@ -14,6 +14,56 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Windows下使用Headless Chrome</title>
+    <link href="http://topgrd.me/2017/04/26/headless-Chrome/"/>
+    <id>http://topgrd.me/2017/04/26/headless-Chrome/</id>
+    <published>2017-04-25T16:00:00.000Z</published>
+    <updated>2017-04-27T02:07:06.101Z</updated>
+    
+    <content type="html"><![CDATA[<p>google在4月的时候宣布他们将在chrome 59中支持headless模式，headless模式即chrome会以一种静默的模式启动，他不会启用界面，但是他在后台的行为与正常浏览器一样。  </p>
+<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>安装一个支持headless的chrome版本，我使用的是chrome canary，是chrome的实验版本，新的特性一版都会最新添加在里面。  </p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>最简单的启动方式是在桌面上右键chrome，然后在目标后面添加<code>--headless --remote-debugging-port=9222 --disable-gpu https://chromium.org</code>,然后右键，这样chrome就在后台以headless模式运行了，并且监听的9222端口。或者使用命令行的方式打开 在后面添加刚才的参数  </p>
+<h2 id="使用chrome-remote-interface"><a href="#使用chrome-remote-interface" class="headerlink" title="使用chrome-remote-interface"></a>使用chrome-remote-interface</h2><p>使用npm的包<a href="https://github.com/cyrus-and/chrome-remote-interface" target="_blank" rel="external">chrome-remote-interface</a>会让我们更方便的完成想要的操作，它允许使用配置远程链接chrome，然后调用api（chrome debugger-protocol）去操作。<br><a id="more"></a></p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>以下代码完成了3个操作，分别调用了Network Page Console，主要的功能是监听console.messageAdded事件，一旦console有消音添加，会在cmd/bash中打印<br>，打印网络请求，打印页面img的属性。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> CDP = <span class="built_in">require</span>(<span class="string">"chrome-remote-interface"</span>)</div><div class="line"></div><div class="line">CDP(<span class="function"><span class="params">chrome</span> =&gt;</span> &#123;</div><div class="line">  <span class="keyword">const</span> &#123; Network, Page, Console &#125; = chrome</div><div class="line"></div><div class="line">  Network.requestWillBeSent(<span class="function"><span class="params">params</span> =&gt;</span> &#123;</div><div class="line">    <span class="built_in">console</span>.log(params.request.url)</div><div class="line">  &#125;)</div><div class="line"></div><div class="line">  chrome.on(<span class="string">"Console.messageAdded"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">message</span>) </span>&#123;</div><div class="line">    <span class="built_in">console</span>.log(message.message.text)</div><div class="line">  &#125;)</div><div class="line"></div><div class="line">  <span class="built_in">Promise</span>.all([Network.enable(), Page.enable(), Console.enable()])</div><div class="line">    .then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</div><div class="line">      <span class="keyword">return</span> Page.navigate(&#123;</div><div class="line">        <span class="attr">url</span>: <span class="string">"http://topgrd.me"</span></div><div class="line">      &#125;)</div><div class="line">    &#125;)</div><div class="line">    .then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</div><div class="line">      setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">        chrome.DOM.getDocument(<span class="function">(<span class="params">error, params</span>) =&gt;</span> &#123;</div><div class="line">          <span class="keyword">if</span> (error) &#123;</div><div class="line">            <span class="built_in">console</span>.error(params)</div><div class="line">            <span class="keyword">return</span></div><div class="line">          &#125;</div><div class="line">          <span class="keyword">const</span> options = &#123;</div><div class="line">            <span class="attr">nodeId</span>: params.root.nodeId,</div><div class="line">            <span class="attr">selector</span>: <span class="string">"img"</span></div><div class="line">          &#125;</div><div class="line">          chrome.DOM.querySelectorAll(options, (error, params) =&gt; &#123;</div><div class="line">            <span class="keyword">if</span> (error) &#123;</div><div class="line">              <span class="built_in">console</span>.error(params)</div><div class="line">              <span class="keyword">return</span></div><div class="line">            &#125;</div><div class="line">            <span class="built_in">console</span>.log(params)</div><div class="line">            params.nodeIds.forEach(<span class="function"><span class="params">nodeId</span> =&gt;</span> &#123;</div><div class="line">              <span class="keyword">const</span> options = &#123;</div><div class="line">                <span class="attr">nodeId</span>: nodeId</div><div class="line">              &#125;</div><div class="line">              chrome.DOM.getAttributes(options, (error, params) =&gt; &#123;</div><div class="line">                <span class="keyword">if</span> (error) &#123;</div><div class="line">                  <span class="built_in">console</span>.error(params)</div><div class="line">                  <span class="keyword">return</span></div><div class="line">                &#125;</div><div class="line">              &#125;)</div><div class="line">            &#125;)</div><div class="line">          &#125;)</div><div class="line">        &#125;)</div><div class="line">      &#125;, <span class="number">5000</span>)</div><div class="line">    &#125;)</div><div class="line">    .catch(<span class="function"><span class="params">err</span> =&gt;</span> &#123;</div><div class="line">      <span class="built_in">console</span>.error(err)</div><div class="line">      chrome.close()</div><div class="line">    &#125;)</div><div class="line">&#125;).on(<span class="string">"error"</span>, err =&gt; &#123;</div><div class="line">  <span class="built_in">console</span>.error(err)</div><div class="line">&#125;)</div></pre></td></tr></table></figure></p>
+<h2 id="可以做什么"><a href="#可以做什么" class="headerlink" title="可以做什么"></a>可以做什么</h2><p>chrome的headless模式可以让我们完成爬虫，自动化测试等相关功能。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;google在4月的时候宣布他们将在chrome 59中支持headless模式，headless模式即chrome会以一种静默的模式启动，他不会启用界面，但是他在后台的行为与正常浏览器一样。  &lt;/p&gt;
+&lt;h2 id=&quot;准备&quot;&gt;&lt;a href=&quot;#准备&quot; class=&quot;headerlink&quot; title=&quot;准备&quot;&gt;&lt;/a&gt;准备&lt;/h2&gt;&lt;p&gt;安装一个支持headless的chrome版本，我使用的是chrome canary，是chrome的实验版本，新的特性一版都会最新添加在里面。  &lt;/p&gt;
+&lt;h2 id=&quot;启动&quot;&gt;&lt;a href=&quot;#启动&quot; class=&quot;headerlink&quot; title=&quot;启动&quot;&gt;&lt;/a&gt;启动&lt;/h2&gt;&lt;p&gt;最简单的启动方式是在桌面上右键chrome，然后在目标后面添加&lt;code&gt;--headless --remote-debugging-port=9222 --disable-gpu https://chromium.org&lt;/code&gt;,然后右键，这样chrome就在后台以headless模式运行了，并且监听的9222端口。或者使用命令行的方式打开 在后面添加刚才的参数  &lt;/p&gt;
+&lt;h2 id=&quot;使用chrome-remote-interface&quot;&gt;&lt;a href=&quot;#使用chrome-remote-interface&quot; class=&quot;headerlink&quot; title=&quot;使用chrome-remote-interface&quot;&gt;&lt;/a&gt;使用chrome-remote-interface&lt;/h2&gt;&lt;p&gt;使用npm的包&lt;a href=&quot;https://github.com/cyrus-and/chrome-remote-interface&quot;&gt;chrome-remote-interface&lt;/a&gt;会让我们更方便的完成想要的操作，它允许使用配置远程链接chrome，然后调用api（chrome debugger-protocol）去操作。&lt;br&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>曲线救国之SVN客户端钩子</title>
+    <link href="http://topgrd.me/2017/04/17/svnhook/"/>
+    <id>http://topgrd.me/2017/04/17/svnhook/</id>
+    <published>2017-04-16T16:00:00.000Z</published>
+    <updated>2017-04-27T02:17:54.369Z</updated>
+    
+    <content type="html"><![CDATA[<p>此方法使用于没有权限到SVN仓库服务器设置钩子。  </p>
+<h2 id="How-to-do"><a href="#How-to-do" class="headerlink" title="How to do"></a>How to do</h2><p>首先客户端的hook是在TortoiseSVN里支持的，所以得先安装TortoiseSVN，我相信使用SVN的大部分人都安装了这个软件。然后在TortoiseSVN的设置里找到hook script。<br><img src="/img/setting.png" alt="set"><br>然后点击add添加自己的脚本  </p>
+<a id="more"></a>
+<p><img src="/img/hook.png" alt="script"><br>这里选择的是脚本执行的时机，具体可以查看文档<a href="https://tortoisesvn.net/docs/nightly/TortoiseSVN_zh_CN/tsvn-dug-settings.html" target="_blank" rel="external">doc</a><br>我这里是使用了node脚本，并选择在开始提交前执行，当然，你也可以选择执行你自己熟悉的语言写的脚本，如java, c, Python等.<br><img src="/img/sethook.png" alt="sethook"><br>上图中 我设置了开始提交前执行，用node执行index.js来进行代码检查（eslint）工作，并勾选等待脚本执行结束和总是执行此脚本，那么以后只要我对work目录下的文件进行提交，那么提交开始前它都会执行我的代码检查脚本。  然后你也可以设置提交代码后执行脚本发送邮件通知等功能。至于脚本怎么写我就不具体描述了。效果如图<br><img src="/img/em.png" alt="preview">  </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;此方法使用于没有权限到SVN仓库服务器设置钩子。  &lt;/p&gt;
+&lt;h2 id=&quot;How-to-do&quot;&gt;&lt;a href=&quot;#How-to-do&quot; class=&quot;headerlink&quot; title=&quot;How to do&quot;&gt;&lt;/a&gt;How to do&lt;/h2&gt;&lt;p&gt;首先客户端的hook是在TortoiseSVN里支持的，所以得先安装TortoiseSVN，我相信使用SVN的大部分人都安装了这个软件。然后在TortoiseSVN的设置里找到hook script。&lt;br&gt;&lt;img src=&quot;/img/setting.png&quot; alt=&quot;set&quot;&gt;&lt;br&gt;然后点击add添加自己的脚本  &lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>React中的setState是异步的</title>
@@ -33,6 +83,159 @@
     <summary type="html">
     
       &lt;h1 id=&quot;React中的setState是异步的&quot;&gt;&lt;a href=&quot;#React中的setState是异步的&quot; class=&quot;headerlink&quot; title=&quot;React中的setState是异步的&quot;&gt;&lt;/a&gt;React中的setState是异步的&lt;/h1&gt;&lt;p&gt;在写
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Vue总结</title>
+    <link href="http://topgrd.me/2016/12/22/vue/"/>
+    <id>http://topgrd.me/2016/12/22/vue/</id>
+    <published>2016-12-21T16:00:00.000Z</published>
+    <updated>2017-04-27T02:02:52.347Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="在使用Vue-ElementUI-Vuex-Vue-Router中遇到的问题以及解决"><a href="#在使用Vue-ElementUI-Vuex-Vue-Router中遇到的问题以及解决" class="headerlink" title="在使用Vue+ElementUI+Vuex+Vue-Router中遇到的问题以及解决"></a>在使用Vue+ElementUI+Vuex+Vue-Router中遇到的问题以及解决</h1><p>初学Vue，直接实战，目前为止遇到一些问题总结。  </p>
+<ul>
+<li>使用vue-cli最新版本时，执行<code>npm run dev</code>出现错误，执行<code>npm run build</code>无错。研究cmd的错误提示以及源码中build文件夹下的代码，最后在其中的<code>dev-server.js</code>中打印了<code>process.env.NODE_ENV</code>信息，结果显示<code>production</code>。修改<code>package.json</code>文件scripts中的配置<code>&quot;dev&quot;: &quot;set NODE_ENV=development&amp;&amp;node build/dev-server.js&quot;,</code> 开发模式正常执行。  </li>
+<li>使用v-for时，不能在一个组件template的根元素上绑定。  </li>
+<li><p>做IE兼容，Vuex在IE下需要ES6的promoise的polyfill。 执行<code>npm i babel-polyfill -D</code>，修改webpack.base.conf.js  </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">entry: &#123;</div><div class="line">  <span class="attr">app</span>: [<span class="string">'babel-polyfill'</span>, <span class="string">'./src/main.js'</span>]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>Vue2中props不能设置双向绑定，防止对父组件产生反向影响，所以要是子组件的数据变化影响父组件中的数据，可以使用Vue自带的自定义事件来解决，使用v-on来绑定，使用$emit触发，在v-on绑定自定义事件时，可以将$event作为最后一个参数传入。 </p>
+</li>
+</ul>
+<a id="more"></a> 
+<ul>
+<li>当一个列表组件中数据是通过ajax异步请求的时候，会发现即使将方法写在生命周期created方法中时，第一次进入页面时此组件也没有渲染，这时候可以使用v-if控制显示，在ajax请求的时候，定义一个state属性isFetching为false，并让v-if绑定此值。当数据获取到后通过Vuex将其改为true，这样就不会出现页面没有渲染组件的情况。在ajax请求过程中可使用一个提示加载中的UI组件.  </li>
+<li>当你使用了Vuex时,修改state中的数据时，不能直接通过赋值来修改，而是通过dispatch action来修改状态，并且在Vuex中修改一个数组的数据时，是不能直接赋值修改的。由于 JavaScript 的限制， Vue 不能检测以下变动的数组，所以可以使用splice修改来达到watch的效果。<br><a href="https://cn.vuejs.org/v2/guide/list.html#注意事项" target="_blank" rel="external">注意事项</a><br>（未完待续）  </li>
+</ul>
+<p>个人认为如果你接触过React那一套和Angular，学习Vue成本很低。因为Vue有很多其他框架的一些特性，响应式组件化思想，Angular的指令，template，React的虚拟DOM，Vuex和Redux也是相同的思想，React需要用JSX写，但Vue则拥抱html。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;在使用Vue-ElementUI-Vuex-Vue-Router中遇到的问题以及解决&quot;&gt;&lt;a href=&quot;#在使用Vue-ElementUI-Vuex-Vue-Router中遇到的问题以及解决&quot; class=&quot;headerlink&quot; title=&quot;在使用Vue+ElementUI+Vuex+Vue-Router中遇到的问题以及解决&quot;&gt;&lt;/a&gt;在使用Vue+ElementUI+Vuex+Vue-Router中遇到的问题以及解决&lt;/h1&gt;&lt;p&gt;初学Vue，直接实战，目前为止遇到一些问题总结。  &lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;使用vue-cli最新版本时，执行&lt;code&gt;npm run dev&lt;/code&gt;出现错误，执行&lt;code&gt;npm run build&lt;/code&gt;无错。研究cmd的错误提示以及源码中build文件夹下的代码，最后在其中的&lt;code&gt;dev-server.js&lt;/code&gt;中打印了&lt;code&gt;process.env.NODE_ENV&lt;/code&gt;信息，结果显示&lt;code&gt;production&lt;/code&gt;。修改&lt;code&gt;package.json&lt;/code&gt;文件scripts中的配置&lt;code&gt;&amp;quot;dev&amp;quot;: &amp;quot;set NODE_ENV=development&amp;amp;&amp;amp;node build/dev-server.js&amp;quot;,&lt;/code&gt; 开发模式正常执行。  &lt;/li&gt;
+&lt;li&gt;使用v-for时，不能在一个组件template的根元素上绑定。  &lt;/li&gt;
+&lt;li&gt;&lt;p&gt;做IE兼容，Vuex在IE下需要ES6的promoise的polyfill。 执行&lt;code&gt;npm i babel-polyfill -D&lt;/code&gt;，修改webpack.base.conf.js  &lt;/p&gt;
+&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;entry: &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &lt;span class=&quot;attr&quot;&gt;app&lt;/span&gt;: [&lt;span class=&quot;string&quot;&gt;&#39;babel-polyfill&#39;&lt;/span&gt;, &lt;span class=&quot;string&quot;&gt;&#39;./src/main.js&#39;&lt;/span&gt;]&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Vue2中props不能设置双向绑定，防止对父组件产生反向影响，所以要是子组件的数据变化影响父组件中的数据，可以使用Vue自带的自定义事件来解决，使用v-on来绑定，使用$emit触发，在v-on绑定自定义事件时，可以将$event作为最后一个参数传入。 &lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Functional Programing（二)</title>
+    <link href="http://topgrd.me/2016/12/01/FP2/"/>
+    <id>http://topgrd.me/2016/12/01/FP2/</id>
+    <published>2016-11-30T16:00:00.000Z</published>
+    <updated>2017-04-27T02:01:35.472Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="Functional-Programing-二"><a href="#Functional-Programing-二" class="headerlink" title="Functional Programing (二)"></a>Functional Programing (二)</h1><h2 id="Functor"><a href="#Functor" class="headerlink" title="Functor"></a>Functor</h2><h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>创建一个容器Container,里面可以存储任意值<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Container</span>(<span class="params">x</span>) </span>&#123;</div><div class="line">  <span class="keyword">this</span>.__value = x</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<a id="more"></a>
+<p>但是我们如果创建一个容器，每次都需要写new，可以创建一个of函数来避免。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Container.of = <span class="function"><span class="keyword">function</span> (<span class="params">x</span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Container(x)</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这样，如果构造一个新的容器，则只需要<code>Container.of(x)</code>就行了。 如果容器中有了值，我们需要一个方法能够操作这个值。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Container.prototype.map = <span class="function"><span class="keyword">function</span> (<span class="params">f</span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> Container.of(f(<span class="keyword">this</span>.__value))</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>利用map方法，将想要操作这个值的方法传递进去，操作容器内的值，并返回一个新的容器和操作后的值。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;Functional-Programing-二&quot;&gt;&lt;a href=&quot;#Functional-Programing-二&quot; class=&quot;headerlink&quot; title=&quot;Functional Programing (二)&quot;&gt;&lt;/a&gt;Functional Programing (二)&lt;/h1&gt;&lt;h2 id=&quot;Functor&quot;&gt;&lt;a href=&quot;#Functor&quot; class=&quot;headerlink&quot; title=&quot;Functor&quot;&gt;&lt;/a&gt;Functor&lt;/h2&gt;&lt;h3 id=&quot;Container&quot;&gt;&lt;a href=&quot;#Container&quot; class=&quot;headerlink&quot; title=&quot;Container&quot;&gt;&lt;/a&gt;Container&lt;/h3&gt;&lt;p&gt;创建一个容器Container,里面可以存储任意值&lt;br&gt;&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;Container&lt;/span&gt;(&lt;span class=&quot;params&quot;&gt;x&lt;/span&gt;) &lt;/span&gt;&amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;.__value = x&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Functional Programing（一)</title>
+    <link href="http://topgrd.me/2016/11/24/FP1/"/>
+    <id>http://topgrd.me/2016/11/24/FP1/</id>
+    <published>2016-11-23T16:00:00.000Z</published>
+    <updated>2017-04-27T02:08:31.758Z</updated>
+    
+    <content type="html"><![CDATA[<p>最近看了函数式编程，传统方式上我们一般是命令式编程，而FP是一种完全不同的编程思想， 他会让你拥有不同的编程体验。<br>在数学上，我们定义一个函数y=f(x)或者y=f(g(x))。当我们输入固定的x值时，函数y的值是一定的。而函数式编程即是这么一种风格，它强调副作用最小，鼓励使用不可变数据和纯函数。在如今的js界，函数式编程变的越来越留下。redux，immutable，Rxjs等都是函数式编程的实践。  </p>
+<a id="more"></a>
+<h2 id="纯函数"><a href="#纯函数" class="headerlink" title="纯函数"></a>纯函数</h2><p>何谓纯函数？就是同样的输入，结果永远保持不变（immutable），非纯函数，则同样的输入会导致不同的结果。 在javascript的原生方法中，数组的splice就是非纯函数，因为它会改变原始数组，并将结果返回。而slice则是纯函数，因为它不会改变原始数组，它返回的是新的数组（原数组的副本）。纯函数是不会修改变量，它每次返回都是新的变量或者原始变量的拷贝，他不会修改系统变量，没有副作用。  </p>
+<h2 id="函数柯里化-curry"><a href="#函数柯里化-curry" class="headerlink" title="函数柯里化 curry"></a>函数柯里化 curry</h2><p>函数柯里化：只传递给函数一部分参数来调用它，让它返回一个函数去处理剩下的参数。如<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">  <span class="keyword">const</span> f1 = <span class="function">(<span class="params">x, y</span>) =&gt;</span> x * y;</div><div class="line">  <span class="comment">// 柯里化：</span></div><div class="line">  <span class="keyword">const</span> f2 =&gt; <span class="function"><span class="params">x</span> =&gt;</span> (<span class="function"><span class="params">y</span>=&gt;</span> x * y);</div><div class="line">  <span class="comment">// example</span></div><div class="line">  <span class="keyword">const</span> add = <span class="function"><span class="params">x</span> =&gt;</span> (<span class="function"><span class="params">y</span> =&gt;</span> x+y);</div><div class="line">  <span class="keyword">const</span> add2 = add(<span class="number">2</span>);</div><div class="line">  <span class="keyword">let</span> result = add2(<span class="number">4</span>); <span class="comment">// 6</span></div><div class="line"><span class="string">``</span><span class="string">`  </span></div><div class="line">上面的例子中我们将函数f1柯里化为f2，f2接受第一个参数x会返回一个函数 `x * y<span class="string">`，如add2返回的是2 + y，第二次传入y得到最后结果。  </span></div><div class="line">使用lodash中的curry</div><div class="line">`<span class="string">``</span>js</div><div class="line">  <span class="keyword">import</span> &#123; curry &#125; <span class="keyword">from</span> <span class="string">'lodash'</span>;</div><div class="line">  <span class="keyword">const</span> mutiply = curry(<span class="function">(<span class="params">x, y</span>) =&gt;</span> x * y);</div><div class="line">  <span class="keyword">const</span> mutiply4 = mutiply(<span class="number">4</span>);</div><div class="line">  <span class="keyword">let</span> result = mutiply4(<span class="number">6</span>); <span class="comment">// 4 * 6 =24;</span></div><div class="line"><span class="string">``</span><span class="string">`  </span></div><div class="line">自己实现一个简陋的curry函数  </div><div class="line">`<span class="string">``</span>js</div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">curry</span>(<span class="params">fn</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> curryFn = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">    	<span class="keyword">var</span> slice = <span class="built_in">Array</span>.prototype.slice</div><div class="line">    	<span class="keyword">var</span> args = slice.call(<span class="built_in">arguments</span>)</div><div class="line">    	<span class="keyword">if</span> (args.length &lt; fn.length) &#123;</div><div class="line">    	  <span class="keyword">return</span> curryFn.apply(<span class="keyword">this</span>, args.concat(slice.call(<span class="built_in">arguments</span>)))</div><div class="line">    	&#125;</div><div class="line">    	<span class="keyword">return</span> fn.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> curryFn</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>原理是利用递归和闭包。<br>利用curry向后传递参数的性质可以实现跟踪trace函数。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> trace = curry(<span class="function"><span class="keyword">function</span> (<span class="params">tag, x</span>) </span>&#123;</div><div class="line">    <span class="built_in">console</span>.log(tag, x)</div><div class="line">    <span class="keyword">return</span> x</div><div class="line">&#125;)</div></pre></td></tr></table></figure></p>
+<p>再利用后面所说的compose将trace函数组合在某一步就可以再函数运行过程中打印想要查看的信息了。</p>
+<h2 id="组合-compose"><a href="#组合-compose" class="headerlink" title="组合 compose"></a>组合 compose</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> addFour = <span class="function">(<span class="params">x</span>) =&gt;</span> x + <span class="number">4</span>;</div><div class="line"><span class="keyword">const</span> addSix = <span class="function">(<span class="params">x</span>) =&gt;</span> x + <span class="number">6</span>;</div><div class="line"><span class="comment">//  简单的compose</span></div><div class="line"><span class="keyword">const</span> compose = <span class="function">(<span class="params">f, g</span>) =&gt;</span> (<span class="function">(<span class="params">x</span>) =&gt;</span> f(g(x)));</div></pre></td></tr></table></figure>
+<p>addFour函数将参数加4，addSix将参数加6，那么addTen呢，是不是应该addFour后addSix？ 上面的compose函数就是组合函数，将函数f和g组合起来。先执行g(x)，然后将g(x)的结果作为f的参数执行。所以addTen方法如下<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> addTen =&gt; compose(addFour, addSix);</div><div class="line">addTen(<span class="number">1</span>); <span class="comment">// 11</span></div></pre></td></tr></table></figure></p>
+<p>在 compose 的定义中，g 将先于 f 执行，因此就创建了一个从右到左的数据流。这样做的可读性远远高于嵌套一大堆的函数调用.  是不是很像数学中的函数。</p>
+<blockquote>
+<p>让代码从右向左运行，而不是由内而外运行，我觉得可以称之为“左倾”.  </p>
+</blockquote>
+<p>使用compose函数就可以将两个，三个，四个等多个函数黏在一起。并让其顺序由右向左运行。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> addTenTrace = compose(addFour, trace(<span class="string">'after addSix'</span>), addSix)</div><div class="line">addTenTrace(<span class="number">3</span>); <span class="comment">// log: after addSix 9</span></div></pre></td></tr></table></figure></p>
+<p>上面利用的就可以跟踪到addSix后函数的运行情况了。  </p>
+<h2 id="PointFree"><a href="#PointFree" class="headerlink" title="PointFree"></a>PointFree</h2><p>在FP中，pointfree指的是永远不要说出你的数据，既不暴露数据。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// not pointfree (提到了word)</span></div><div class="line"><span class="keyword">var</span> snakeCase = <span class="function"><span class="keyword">function</span> (<span class="params">word</span>) </span>&#123;</div><div class="line">	<span class="keyword">return</span> word.toLowerCase().replace(<span class="regexp">/\s+/ig</span>, <span class="string">'_'</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">console</span>.log(snakeCase(<span class="string">'Hello Topgrd'</span>))</div><div class="line"><span class="keyword">var</span> replace = <span class="function"><span class="keyword">function</span> (<span class="params">pattern, replacement</span>) </span>&#123;</div><div class="line">	<span class="keyword">return</span> <span class="function"><span class="keyword">function</span> (<span class="params">word</span>) </span>&#123;</div><div class="line">		<span class="keyword">return</span> word.replace(pattern, replacement)</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">// pointfree</span></div><div class="line"><span class="keyword">var</span> snakeCase2 = _.compose(replace(<span class="regexp">/\s+/ig</span>, <span class="string">'_'</span>), _.toUpper)</div></pre></td></tr></table></figure></p>
+<p>上面两个函数的差异很容易看出来，一个提到了你要处理的数据word，而另一个没有。  </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;最近看了函数式编程，传统方式上我们一般是命令式编程，而FP是一种完全不同的编程思想， 他会让你拥有不同的编程体验。&lt;br&gt;在数学上，我们定义一个函数y=f(x)或者y=f(g(x))。当我们输入固定的x值时，函数y的值是一定的。而函数式编程即是这么一种风格，它强调副作用最小，鼓励使用不可变数据和纯函数。在如今的js界，函数式编程变的越来越留下。redux，immutable，Rxjs等都是函数式编程的实践。  &lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>在工作中遇到的浏览器兼容问题总结</title>
+    <link href="http://topgrd.me/2016/05/13/compatibility/"/>
+    <id>http://topgrd.me/2016/05/13/compatibility/</id>
+    <published>2016-05-12T16:00:00.000Z</published>
+    <updated>2017-04-27T01:59:27.131Z</updated>
+    
+    <content type="html"><![CDATA[<p>#浏览器兼容  </p>
+<ul>
+<li>ie9不支持placeholder</li>
+<li>IE8不支持 <strong>proto</strong></li>
+<li>IE9不支持监听输入框退格事件</li>
+<li>window.onload存在兼容性问题</li>
+<li>decodeURIComponent()存在Uncaught URIError: URI malformed问题，如decodeURIComponent(‘a%AFc’)。  <h1 id="notice"><a href="#notice" class="headerlink" title="notice"></a>notice</h1></li>
+<li>addEventListener的handler使用bind的时候， 需要保存bind后的handler，才能remove。<br>```js<br>var touchHandler = function (e) {<br>  // do something<br>}<br>var hanlder = touchHandler.bind(this);<br>document.addEventListener(‘touchstart’, handler, false);<br>// when remove<br>document.removeEventListener(‘touchstart’, handler, false);</li>
+</ul>
+<p>```  </p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;#浏览器兼容  &lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ie9不支持placeholder&lt;/li&gt;
+&lt;li&gt;IE8不支持 &lt;strong&gt;proto&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;IE9不支持监听输入框退格事件&lt;/li&gt;
+&lt;li&gt;window.onload存在兼容性问题&lt;/li
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>一道题</title>
+    <link href="http://topgrd.me/2016/04/01/add/"/>
+    <id>http://topgrd.me/2016/04/01/add/</id>
+    <published>2016-03-31T16:00:00.000Z</published>
+    <updated>2017-04-27T01:58:29.334Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="一道题"><a href="#一道题" class="headerlink" title="一道题"></a>一道题</h1><p>实现add(x)输出x, add(x)(y)输出x+y的结果，add(x)(y)(z)则输出x+y+z…可以无限调用。<br>当我第一眼看到这个题的时候，马上想到的是函数式编程，利用compose实现。要实现这样的函数，必须要改写函数的toString和valueOf方法。<br><a id="more"></a></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">add</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  <span class="keyword">var</span> _args = [].slice.call(<span class="built_in">arguments</span>);</div><div class="line">  <span class="keyword">var</span> adder = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> _adder = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">      [].push.apply(_args, [].slice.call(<span class="built_in">arguments</span>));</div><div class="line">      <span class="built_in">console</span>.log(<span class="string">'args'</span>, _args);</div><div class="line">      <span class="keyword">return</span> _adder;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    _adder.toString = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">      <span class="keyword">return</span> _args.reduce(<span class="function"><span class="keyword">function</span>(<span class="params">a, b</span>) </span>&#123;</div><div class="line">        <span class="keyword">return</span> a + b;</div><div class="line">      &#125;);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> _adder;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> adder.apply(<span class="literal">null</span>, [].slice.call(<span class="built_in">arguments</span>));</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">console</span>.log(add(<span class="number">2</span>)(<span class="number">3</span>)(<span class="number">3</span>));</div></pre></td></tr></table></figure>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;一道题&quot;&gt;&lt;a href=&quot;#一道题&quot; class=&quot;headerlink&quot; title=&quot;一道题&quot;&gt;&lt;/a&gt;一道题&lt;/h1&gt;&lt;p&gt;实现add(x)输出x, add(x)(y)输出x+y的结果，add(x)(y)(z)则输出x+y+z…可以无限调用。&lt;br&gt;当我第一眼看到这个题的时候，马上想到的是函数式编程，利用compose实现。要实现这样的函数，必须要改写函数的toString和valueOf方法。&lt;br&gt;
     
     </summary>
     
@@ -96,11 +299,11 @@
     <link href="http://topgrd.me/2014/12/15/2014-12-15-marginproblem/"/>
     <id>http://topgrd.me/2014/12/15/2014-12-15-marginproblem/</id>
     <published>2014-12-14T16:00:00.000Z</published>
-    <updated>2017-04-26T15:07:09.267Z</updated>
+    <updated>2017-04-27T02:17:21.997Z</updated>
     
     <content type="html"><![CDATA[<a id="more"></a>  
 <p>##上下margin叠加<br>当两个元素为上下关系，且都具有margin属性时，此时margin会造成外边距叠加。<br>例如，页面有2个div id为a和b，他们的css如下:<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="selector-id">#a</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">&#125;  </div><div class="line"><span class="selector-id">#b</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>这两个元素都有上下边距为10px，按道理说他们两之间应该上下相隔20px。但浏览器显示结果并非这样。从下图通过左右的间距对比可以看出他们之间只相隔10px。<br>  <img src="/assets/img/margin1.jpg" alt="margin1"><br>为什么会这样呢，通过网上搜寻以后发现这是css设计造成的。因为他们考虑到如果我们要对段落进行控制，如果第一段与上方距离10px，那第二段与第一段之间的距离就变成20px，这不是我们想要的，因此设计出了空白边叠加规则。<br>空白边叠加时，以较大的margin值为准。<br>怎么解决这个问题呢，根据css解释规则，在把元素设置float后，将不再进行margin叠加<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="selector-id">#a</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">  <span class="attribute">float</span>:left;</div><div class="line">&#125;  </div><div class="line"><span class="selector-id">#b</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">  <span class="attribute">float</span>:left;</div><div class="line">  <span class="attribute">clear</span>:left;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这两个元素都有上下边距为10px，按道理说他们两之间应该上下相隔20px。但浏览器显示结果并非这样。从下图通过左右的间距对比可以看出他们之间只相隔10px。<br>  <img src="/img/margin1.jpg" alt="margin1"><br>为什么会这样呢，通过网上搜寻以后发现这是css设计造成的。因为他们考虑到如果我们要对段落进行控制，如果第一段与上方距离10px，那第二段与第一段之间的距离就变成20px，这不是我们想要的，因此设计出了空白边叠加规则。<br>空白边叠加时，以较大的margin值为准。<br>怎么解决这个问题呢，根据css解释规则，在把元素设置float后，将不再进行margin叠加<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="selector-id">#a</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">  <span class="attribute">float</span>:left;</div><div class="line">&#125;  </div><div class="line"><span class="selector-id">#b</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">  <span class="attribute">float</span>:left;</div><div class="line">  <span class="attribute">clear</span>:left;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>结果得到如下图的效果<br><img src="/assets/img/margin2.jpg" alt="margin2"><br>我们看到a和b之间的间隔已经变为20px。   </p>
 <p>##IE6下元素float后margin左右边距加倍<br>在IE6下如果元素设置浮动后，元素的左右边距会加倍。也就是常听到的IE6双边距问题。但我们只需要在元素的样式中添加<code>display:inline</code>就可以解决。  </p>
 ]]></content>
@@ -120,12 +323,12 @@
     <link href="http://topgrd.me/2014/12/03/2014-12-03-nodejs_connect_mysql/"/>
     <id>http://topgrd.me/2014/12/03/2014-12-03-nodejs_connect_mysql/</id>
     <published>2014-12-02T16:00:00.000Z</published>
-    <updated>2017-04-26T14:58:14.253Z</updated>
+    <updated>2017-04-27T02:17:15.727Z</updated>
     
     <content type="html"><![CDATA[<p>今天在学习node时，发现书上的例子是node连接mongodb数据库的，没有提到mysql,而我还没有下载mongodb，就先想连接电脑上已经有点mysql，之前做的东西数据库基本上都用的mysql，经过上网查找相关信息，终于知道如何用node连接mysql进行数据库操作了.<br><a id="more"></a><br>首先安装mysql包(nodejs连接mysql的包有好几种(db-mysql..)，这里我用的是mysql。</p>
 <p><code>npm install mysql</code></p>
 <p>然后就是写连接代码了<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Created with IntelliJ IDEA.</div><div class="line"> * Creator: LeeZhuo</div><div class="line"> * Date: 2014/12/3</div><div class="line"> * Time: 22:22</div><div class="line"> */</div><div class="line"><span class="keyword">var</span> mysql = <span class="built_in">require</span>(<span class="string">'mysql'</span>);</div><div class="line"></div><div class="line"><span class="keyword">var</span> connection = mysql.createConnection(&#123;</div><div class="line">  <span class="attr">host</span>: <span class="string">'localhost'</span>, <span class="comment">//host</span></div><div class="line">  user: <span class="string">'topgrd'</span>, <span class="comment">//用户名</span></div><div class="line">  password: <span class="string">''</span>, <span class="comment">//密码</span></div><div class="line">  database: <span class="string">'library'</span> <span class="comment">//要连接的数据库</span></div><div class="line">&#125;);</div><div class="line"><span class="comment">/*</span></div><div class="line">    </div><div class="line">var connection = mysql.createConnection('mysql://user:password@host/database');             //另一种写法</div><div class="line">*/</div><div class="line">connection.connect();</div><div class="line"><span class="comment">/*定义数据库CRUD查询语句*/</span></div><div class="line"><span class="keyword">var</span> queryString = <span class="string">'select * from bookinfo'</span>;</div><div class="line"></div><div class="line">connection.query(queryString, <span class="function"><span class="keyword">function</span>(<span class="params">err, results, field</span>) </span>&#123;</div><div class="line">  <span class="keyword">if</span> (err) &#123;</div><div class="line">    <span class="keyword">throw</span> err;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i <span class="keyword">in</span> results) &#123;</div><div class="line">    <span class="built_in">console</span>.log(<span class="string">'bookname: '</span> + results[i].bookname + <span class="string">'\tauthor: '</span> + results[i].author + <span class="string">'\tpressyear: '</span> + results[i].pressyear);</div><div class="line">  &#125;</div><div class="line">&#125;);</div><div class="line">connection.end(); <span class="comment">//关闭连接</span></div></pre></td></tr></table></figure></p>
-<p> 上面的代码将我library数据库中bookinfo表的信息打印出来<br> <img src="/assets/img/mysql.jpg" alt="photo">  </p>
+<p> 上面的代码将我library数据库中bookinfo表的信息打印出来<br> <img src="/img/mysql.jpg" alt="photo">  </p>
 ]]></content>
     
     <summary type="html">
@@ -282,11 +485,11 @@ var paten4=/3[^8]3/;
     <link href="http://topgrd.me/2014/11/20/2014-11-20-feeling_11_20/"/>
     <id>http://topgrd.me/2014/11/20/2014-11-20-feeling_11_20/</id>
     <published>2014-11-19T16:00:00.000Z</published>
-    <updated>2017-04-26T15:05:22.895Z</updated>
+    <updated>2017-04-27T02:17:04.993Z</updated>
     
     <content type="html"><![CDATA[<p>又是一年银杏季，大学已经过去一半多。</p>
 <a id="more"></a>  
-<p><img src="/assets/themes/Snail/img/xing.jpg" alt="银杏树"><br><img src="/assets/themes/Snail/img/feng.jpg" alt="枫树"><br>  今天是11月20号，最近又是学校一年一度的银杏节，想想我在这里已经是第3次了，我的大学已经过了一大半。大学这3年，有得有失，马上要找实习了，希望能获得一份好的工作。老天保佑，╭(′▽`)╯。</p>
+<p><img src="/img/xing.jpg" alt="银杏树"><br><img src="/img/feng.jpg" alt="枫树"><br>  今天是11月20号，最近又是学校一年一度的银杏节，想想我在这里已经是第3次了，我的大学已经过了一大半。大学这3年，有得有失，马上要找实习了，希望能获得一份好的工作。老天保佑，╭(′▽`)╯。</p>
 ]]></content>
     
     <summary type="html">
@@ -411,147 +614,6 @@ var paten4=/3[^8]3/;
     <summary type="html">
     
       &lt;p&gt;前端的小知识，看看你知道不知道.&lt;/p&gt;
-    
-    </summary>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>前端收藏</title>
-    <link href="http://topgrd.me/2014/10/25/2014-10-25-qianduancollection/"/>
-    <id>http://topgrd.me/2014/10/25/2014-10-25-qianduancollection/</id>
-    <published>2014-10-24T16:00:00.000Z</published>
-    <updated>2017-04-26T15:09:06.425Z</updated>
-    
-    <content type="html"><![CDATA[<p>收藏的一些和前端有关的信息  </p>
-<a id="more"></a>  
-<p>##专注前端的一些blog：<br>CSS森林(CSS Forest)：无需多解释了。<br><a href="http://www.cssforest.org/blog/index.php?atom=1" target="_blank" rel="external">http://www.cssforest.org/blog/index.php?atom=1</a></p>
-<p>PuterJam’s Blog：牛人，tx前端库的头头。<br><a href="http://www.pjhome.net/feed.asp" target="_blank" rel="external">http://www.pjhome.net/feed.asp</a></p>
-<p>彬Go：人人网一位高产作者。<br><a href="http://blog.bingo929.com/feed" target="_blank" rel="external">http://blog.bingo929.com/feed</a></p>
-<p>支付宝前端开发车间：看名字就懂了<br><a href="http://ued.alipay.com/wd/feed/" target="_blank" rel="external">http://ued.alipay.com/wd/feed/</a></p>
-<p>ria之家–RIA三部曲：jquery、ext、flex：淘宝几位作者共同撰写的blog，同样十分高产<br><a href="http://www.36ria.com/feed" target="_blank" rel="external">http://www.36ria.com/feed</a></p>
-<p>幸福收藏夹：sofish的，不多说了。<br><a href="http://feed.sofish.de" target="_blank" rel="external">http://feed.sofish.de</a></p>
-<p>为之漫笔：李松峰老师，高级js编程等书的译者<br><a href="http://www.cn-cuckoo.com/feed" target="_blank" rel="external">http://www.cn-cuckoo.com/feed</a></p>
-<p>前端观察：学习过程中大量搜索结果都来自于此<br><a href="http://www.qianduan.net/feed" target="_blank" rel="external">http://www.qianduan.net/feed</a></p>
-<p>WEB前端开发：愚人码头的站，基本上也是一个教程基地<br><a href="http://www.css88.com/feed" target="_blank" rel="external">http://www.css88.com/feed</a></p>
-<p>CssRain-前端技术 ：又一个教程基地<br><a href="http://www.cssrain.cn/?feed=rss2" target="_blank" rel="external">http://www.cssrain.cn/?feed=rss2</a></p>
-<p>VILIC’s Blog：一员小将，功力不俗<br><a href="http://www.vilic.info/blog/feed" target="_blank" rel="external">http://www.vilic.info/blog/feed</a></p>
-<p>老赵：不解释了，全能，因为搞了jscex，所以可以把他算到前端行列来。<br><a href="http://blog.zhaojie.me/rss" target="_blank" rel="external">http://blog.zhaojie.me/rss</a></p>
-<p>博客园-三生石上：亦是js领域牛人，耳熟能详的js秘密花园就是其译作。<br><a href="http://www.cnblogs.com/sanshi/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/sanshi/rss.aspx</a></p>
-<p>博客园-Novice Doodle from Gray Zhang &amp; 宅居：他有两个blog，百度的前端大牛<br><a href="http://www.otakustay.com/feed/" target="_blank" rel="external">http://www.otakustay.com/feed/</a><br><a href="http://www.cnblogs.com/GrayZhang/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/GrayZhang/rss.aspx</a>  </p>
-<p>阮一峰：由于也有很多关于前端的blog，姑且也算他是前端人士吧。<br><a href="http://feeds.feedburner.com/ruanyifeng" target="_blank" rel="external">http://feeds.feedburner.com/ruanyifeng</a>    <a href="http://typeof.net：语言开发层面上的js博客，写手包括老赵，" target="_blank" rel="external">http://typeof.net：语言开发层面上的js博客，写手包括老赵，</a> BELLEVE INVIS是主要作者，大牛，写js编译器的  </p>
-<p><a href="http://typeof.net/feed/hax的技术部落格" target="_blank" rel="external">http://typeof.net/feed/hax的技术部落格</a></p>
-<p><a href="http://hax.iteye.com/rssaimingoo的专栏" target="_blank" rel="external">http://hax.iteye.com/rssaimingoo的专栏</a>  </p>
-<p>爱民老师~<br><a href="http://blog.csdn.net/aimingoo/rss.aspx博客园-Ruby&#39;s" target="_blank" rel="external">http://blog.csdn.net/aimingoo/rss.aspx博客园-Ruby&#39;s</a> Louvre：司徒正美，除了众多博文外，最近亦有mass Framework 释出</p>
-<p><a href="http://www.cnblogs.com/rubylouvre/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/rubylouvre/rss.aspx</a><br>博客园-Franky：又一牛~<br><a href="http://www.cnblogs.com/_franky/rss.aspx" target="_blank" rel="external">http://www.cnblogs.com/_franky/rss.aspx</a></p>
-<p>##此外，国内著名公司的一些前端（或前端相关）博客也非常值得订阅，譬如淘宝UED，百度MUX，腾讯CDC等等。<br>分享一些GR订阅的FEED<br><a href="http://Gracecode.com" target="_blank" rel="external">http://Gracecode.com</a><br><a href="http://feeds.gracecode.com/gracecode/" target="_blank" rel="external">http://feeds.gracecode.com/gracecode/</a></p>
-<p>Huang Jie Blog .Com-前端开发<br><a href="http://www.huangjieblog.com/?feed=rss2" target="_blank" rel="external">http://www.huangjieblog.com/?feed=rss2</a></p>
-<p>i在云端<br><a href="http://kinvix.kdv.cn/blog/?feed=rss2" target="_blank" rel="external">http://kinvix.kdv.cn/blog/?feed=rss2</a></p>
-<p>Koubei UED<br><a href="http://ued.koubei.com/?feed=rss2" target="_blank" rel="external">http://ued.koubei.com/?feed=rss2</a>  </p>
-<p>limu的砖篮儿<br><a href="http://limu.iteye.com/rss" target="_blank" rel="external">http://limu.iteye.com/rss</a></p>
-<p>MED<br><a href="http://ued.alimama.com/feed/" target="_blank" rel="external">http://ued.alimama.com/feed/</a></p>
-<p>MephoBox RSS<br><a href="http://box.mepholio.com/rss_feed" target="_blank" rel="external">http://box.mepholio.com/rss_feed</a></p>
-<p>PlanABC - 怿飞’s Blog<br><a href="http://feed.planabc.net/" target="_blank" rel="external">http://feed.planabc.net/</a></p>
-<p>RIAMeeting - 瑞研社区 - Flex培训,Flex教程,Flash教程,ActionScript3,AS3,AIR - RIAMeeting为大家创造更好的交流平台<br><a href="http://www.riameeting.com/rss.xml" target="_blank" rel="external">http://www.riameeting.com/rss.xml</a></p>
-<p>ria之家<br><a href="http://feed.feedsky.com/36ria?source=ignitionfork" target="_blank" rel="external">http://feed.feedsky.com/36ria?source=ignitionfork</a></p>
-<p>Taobao UED Team<br><a href="http://ued.taobao.com/blog/feed/" target="_blank" rel="external">http://ued.taobao.com/blog/feed/</a></p>
-<p>UED TEAM<br><a href="http://www.http://ued163.com/?feed=rss2" target="_blank" rel="external">http://www.http://ued163.com/?feed=rss2</a></p>
-<p>WEB前端开发<br><a href="http://www.http://css88.com/feed" target="_blank" rel="external">http://www.http://css88.com/feed</a></p>
-<p>YAHOO!China UED<br><a href="http://www.uedblog.com/?feed=rss2前端开发-武方博" target="_blank" rel="external">http://www.uedblog.com/?feed=rss2前端开发-武方博</a><br><a href="http://feed.feedsky.com/wfb927" target="_blank" rel="external">http://feed.feedsky.com/wfb927</a></p>
-<p>前端技术<br><a href="http://www.cssrain.cn/feed.asp" target="_blank" rel="external">http://www.cssrain.cn/feed.asp</a></p>
-<p>前端观察<br><a href="http://feeds2.feedburner.com/qianduannet" target="_blank" rel="external">http://feeds2.feedburner.com/qianduannet</a>  </p>
-<p>阿里巴巴（中文站）用户体验设计部博客<br><a href="http://www.aliued.cn/feed" target="_blank" rel="external">http://www.aliued.cn/feed</a>  </p>
-<p>陈成的博客<br><a href="http://www.chencheng.org/blog/feed/" target="_blank" rel="external">http://www.chencheng.org/blog/feed/</a>  </p>
-<p>BearRui(AK-47) 的Blog<br><a href="http://feed.feedsky.com/BearRui?source=ignitionfork" target="_blank" rel="external">http://feed.feedsky.com/BearRui?source=ignitionfork</a>  </p>
-<p><a href="http://CNodeJS.ORG" target="_blank" rel="external">http://CNodeJS.ORG</a>  </p>
-<p><a href="http://feed.feedsky.com/nodejs" target="_blank" rel="external">http://feed.feedsky.com/nodejs</a></p>
-<p>##前端书籍：<br>有哪些关于包括 JavaScript、CSS 和 DOM 在内的网页开发技术的值得推荐的书籍？<br><a href="http://www.zhihu.com/question/19809484" target="_blank" rel="external">http://www.zhihu.com/question/19809484</a>  </p>
-<p>关于 CSS 设计，有什么书比较好？<a href="http://www.zhihu.com/question/19742348" target="_blank" rel="external">http://www.zhihu.com/question/19742348</a></p>
-<p>技术细节：<br>JavaScript方面：</p>
-<p>JavaScript 里的闭包是什么？应用场景有哪些？<a href="http://www.zhihu.com/question/19554716" target="_blank" rel="external">http://www.zhihu.com/question/19554716</a></p>
-<p>JavaScript 中 undefined 与 undeclared 之间的区别是什么？<a href="http://www.zhihu.com/question/19966545" target="_blank" rel="external">http://www.zhihu.com/question/19966545</a></p>
-<p>JavaScript中圆括号() 和 方括号[] 的特殊用法疑问？<a href="http://www.zhihu.com/question/20127472" target="_blank" rel="external">http://www.zhihu.com/question/20127472</a></p>
-<p>国内有哪些靠谱的 Javascript 库 CDN可用？<a href="http://www.zhihu.com/question/20227463" target="_blank" rel="external">http://www.zhihu.com/question/20227463</a></p>
-<p>为什么很多网站在 JavaScript 脚本中都用简单的字母表示变量？<a href="http://www.zhihu.com/question/19717671" target="_blank" rel="external">http://www.zhihu.com/question/19717671</a></p>
-<p>html方面：</p>
-<p>.htm 与 .html 两种文件格式（扩展名）的区别在哪里？<a href="http://www.zhihu.com/question/19718085" target="_blank" rel="external">http://www.zhihu.com/question/19718085</a></p>
-<p>制作前端页面的时候，使用 &nbsp; 当作空格和使用 white-space: pre 的原生空格有什么区别？哪个更好一些？<a href="http://www.zhihu.com/question/19895400#" target="_blank" rel="external">http://www.zhihu.com/question/19895400#</a></p>
-<p>为什么不能在 EDM 模版中使用 DIV ？<a href="http://www.zhihu.com/question/20168819" target="_blank" rel="external">http://www.zhihu.com/question/20168819</a></p>
-<p>CSS 方面：</p>
-<p>命名 CSS 的类或 id 时单词间如何连接？<a href="http://www.zhihu.com/question/19748433" target="_blank" rel="external">http://www.zhihu.com/question/19748433</a></p>
-<p>如何解决外边距叠加的问题？<a href="http://www.zhihu.com/question/19823139" target="_blank" rel="external">http://www.zhihu.com/question/19823139</a></p>
-<p>在 CSS 布局中，用 float 好还是用 position 好？分别有什么优势？<a href="http://www.zhihu.com/question/19588854" target="_blank" rel="external">http://www.zhihu.com/question/19588854</a></p>
-<p>你如何理解 HTML5 的 section？会在什么场景使用？为什么这些场景使用 section 而不是 div？<br><a href="http://www.zhihu.com/question/20227599" target="_blank" rel="external">http://www.zhihu.com/question/20227599</a></p>
-<p>有一 li 元素其中有中文和英文，怎么分别设置他们的字体样式？<a href="http://www.zhihu.com/question/19977292" target="_blank" rel="external">http://www.zhihu.com/question/19977292</a></p>
-<p>CSS 中 block-level boxes、containing block、block formatting context 三者之间的区别和联系是怎样的？<a href="http://www.zhihu.com/question/20086234" target="_blank" rel="external">http://www.zhihu.com/question/20086234</a></p>
-<p>怎样可以很好地保证网页的浏览器兼容性？<a href="http://www.zhihu.com/question/19736007" target="_blank" rel="external">http://www.zhihu.com/question/19736007</a></p>
-<p>##前端工具  </p>
-<p>写 JavaScript 时的 IDE 或编辑器选择有哪些好的推荐？<a href="http://www.zhihu.com/question/19606319" target="_blank" rel="external">http://www.zhihu.com/question/19606319</a></p>
-<p>Notepad++ 有哪些适用于前端开发的插件？ <a href="http://www.zhihu.com/question/19998255" target="_blank" rel="external">http://www.zhihu.com/question/19998255</a></p>
-<p>用 Dreamweaver 写 CSS 代码很有效率，但为什么还有很多人喜欢用 Notepad++ 之类的工具？<br><a href="http://www.zhihu.com/question/19587831" target="_blank" rel="external">http://www.zhihu.com/question/19587831</a></p>
-<p>你觉得在前端开发中值得推荐的常用工具有哪些？<a href="http://www.zhihu.com/question/19561454" target="_blank" rel="external">http://www.zhihu.com/question/19561454</a></p>
-<p>前端工程师都有用哪些比较靠谱的小工具啊？ <a href="http://www.zhihu.com/question/20241338" target="_blank" rel="external">http://www.zhihu.com/question/20241338</a></p>
-<p>有哪些工具可以将 CSS 文件中的属性按照一定的顺序进行排列？<a href="http://www.zhihu.com/question/19990596" target="_blank" rel="external">http://www.zhihu.com/question/19990596</a></p>
-<p>有哪些比较好 CSS 简写（压缩）工具？<a href="http://www.zhihu.com/question/19612973" target="_blank" rel="external">http://www.zhihu.com/question/19612973</a></p>
-<p>什么是 Twitter Bootstrap？<a href="http://www.zhihu.com/question/19821825" target="_blank" rel="external">http://www.zhihu.com/question/19821825</a></p>
-<p>##前端学习 </p>
-<p>入门:<br>若想学 HTML，应从哪里入手？<a href="http://www.zhihu.com/question/19753196" target="_blank" rel="external">http://www.zhihu.com/question/19753196</a></p>
-<p>零基础开始学 Web 前端开发，有什么建议吗？<a href="http://www.zhihu.com/question/19637373" target="_blank" rel="external">http://www.zhihu.com/question/19637373</a></p>
-<p>零基础的网站开发初学者如何系统的学习？<a href="http://www.zhihu.com/question/19834302" target="_blank" rel="external">http://www.zhihu.com/question/19834302</a></p>
-<p>如何帮助前端新人入门和提高？<a href="http://www.zhihu.com/question/19862294" target="_blank" rel="external">http://www.zhihu.com/question/19862294</a></p>
-<p>进阶：<br>如何循序渐进有效学习 JavaScript？<a href="http://www.zhihu.com/question/19713563" target="_blank" rel="external">http://www.zhihu.com/question/19713563</a></p>
-<p>面对变化莫测的 CSS，我该怎么办？<a href="http://www.zhihu.com/question/19653139" target="_blank" rel="external">http://www.zhihu.com/question/19653139</a></p>
-<p>非计算机专业，半路出家，以前做 UI ，现在想改前端，学习 JS 过程中遇到瓶颈了，如何突破？<a href="http://www.zhihu.com/question/19660847" target="_blank" rel="external">http://www.zhihu.com/question/19660847</a></p>
-<p>一名合格的前端工程师的知识结构是怎样的？<a href="http://www.zhihu.com/question/19588629" target="_blank" rel="external">http://www.zhihu.com/question/19588629</a><br>高级：</p>
-<p>怎样成长为一个优秀的 Web 前端开发工程师？<a href="http://www.zhihu.com/question/19554845" target="_blank" rel="external">http://www.zhihu.com/question/19554845</a></p>
-<p><a href="http://w3.org" target="_blank" rel="external">http://w3.org</a> 结构复杂，信息量大，新人从哪里入手比较好？<a href="http://www.zhihu.com/question/20193711" target="_blank" rel="external">http://www.zhihu.com/question/20193711</a></p>
-<p>怎么样才算是精通 JavaScript？<a href="http://www.zhihu.com/question/19657253" target="_blank" rel="external">http://www.zhihu.com/question/19657253</a></p>
-<p>前端就业：<br>好的 Web 前端年薪会有多少？<a href="http://www.zhihu.com/question/19723850" target="_blank" rel="external">http://www.zhihu.com/question/19723850</a></p>
-<p>Web 前端开发岗位，该选择百度还是腾讯？<a href="http://www.zhihu.com/question/19886046" target="_blank" rel="external">http://www.zhihu.com/question/19886046</a></p>
-<p>淘宝 UED 前端、腾讯脚本开发、豆瓣前端开发，应该如何在这几个工作之间选择？<a href="http://www.zhihu.com/question/20084964" target="_blank" rel="external">http://www.zhihu.com/question/20084964</a></p>
-<p>淘宝 UED 前端团队究竟好不好？值得去吗？<a href="http://www.zhihu.com/question/20099712" target="_blank" rel="external">http://www.zhihu.com/question/20099712</a></p>
-<p>前端招聘：<br>如何面试前端工程师？<a href="http://www.zhihu.com/question/19568008" target="_blank" rel="external">http://www.zhihu.com/question/19568008</a></p>
-<p>为什么前端工程师很难找？<a href="http://www.zhihu.com/question/19923687" target="_blank" rel="external">http://www.zhihu.com/question/19923687</a></p>
-<p>如何才能招聘到好的 web 前端人才？<a href="http://www.zhihu.com/question/19651775" target="_blank" rel="external">http://www.zhihu.com/question/19651775</a></p>
-<p>有哪些经典的 Web 前端或者 JavaScript 面试笔试题？<a href="http://www.zhihu.com/question/19841848" target="_blank" rel="external">http://www.zhihu.com/question/19841848</a></p>
-<p>如何解答这道 JavaScript 面试题？<a href="http://www.zhihu.com/question/19747496" target="_blank" rel="external">http://www.zhihu.com/question/19747496</a></p>
-<p>前端漫谈：<br>前端工程师的价值体现在哪里？<a href="http://www.zhihu.com/question/19589966" target="_blank" rel="external">http://www.zhihu.com/question/19589966</a></p>
-<p>Web 前端工程师这一职业在未来行业需求和发展怎样？<a href="http://www.zhihu.com/question/19580161" target="_blank" rel="external">http://www.zhihu.com/question/19580161</a></p>
-<p>如何改善国内前端开发行业的尴尬地位？<a href="http://www.zhihu.com/question/19927065" target="_blank" rel="external">http://www.zhihu.com/question/19927065</a></p>
-<p>一些人瞧不起 jQuery 的理由是什么？<a href="http://www.zhihu.com/question/19969737" target="_blank" rel="external">http://www.zhihu.com/question/19969737</a></p>
-<p>Java 和 JavaScript 是雷锋和雷峰塔的区别，这一说法是怎么来的？<a href="http://www.zhihu.com/question/19598890" target="_blank" rel="external">http://www.zhihu.com/question/19598890</a></p>
-<p>Web 前端和后端工程师的具体职责分别是怎样的？<a href="http://www.zhihu.com/question/19911595" target="_blank" rel="external">http://www.zhihu.com/question/19911595</a></p>
-<p>前端工程师和网页重构工程师二者有什么区别和联系？<a href="http://www.zhihu.com/question/19858246" target="_blank" rel="external">http://www.zhihu.com/question/19858246</a></p>
-<p>做前端开发必需要掌握切图技能吗？<a href="http://www.zhihu.com/question/19769761" target="_blank" rel="external">http://www.zhihu.com/question/19769761</a></p>
-<p>##技术细节   </p>
-<p>JavaScript 中应该用”==”还是”===”？ <a href="http://www.zhihu.com/question/20348948" target="_blank" rel="external">http://www.zhihu.com/question/20348948</a></p>
-<p>JavaScript 中，num = num || 1 这种写法有哪些优缺点？ <a href="http://www.zhihu.com/question/20377595" target="_blank" rel="external">http://www.zhihu.com/question/20377595</a></p>
-<p>使用 Node.js 的优势和劣势都有哪些？有大公司用吗？ <a href="http://www.zhihu.com/question/19653241" target="_blank" rel="external">http://www.zhihu.com/question/19653241</a></p>
-<p>LABjs、RequireJS、SeaJS 哪个最好用？为什么？ <a href="http://www.zhihu.com/question/20342350" target="_blank" rel="external">http://www.zhihu.com/question/20342350</a></p>
-<p>一个 ul 里有若干 li，点击 li 时能方便地知道这是 ul 中的第几个 li 吗？ <a href="http://www.zhihu.com/question/20322273" target="_blank" rel="external">http://www.zhihu.com/question/20322273</a></p>
-<p>怎样在各个浏览器下使用 JavaScript 或者 CSS 控制去除 input 和 button 的虚线？<a href="http://www.zhihu.com/question/19920225" target="_blank" rel="external">http://www.zhihu.com/question/19920225</a></p>
-<p>JavaScript 语句后应该加分号么？ <a href="http://www.zhihu.com/question/20298345" target="_blank" rel="external">http://www.zhihu.com/question/20298345</a></p>
-<p>GitHub 有哪些讨人喜欢的原因？ <a href="http://www.zhihu.com/question/19776649" target="_blank" rel="external">http://www.zhihu.com/question/19776649</a></p>
-<p>A &amp;&amp; B || C 效率比 A ? B : C 高？#JavaScript <a href="http://www.zhihu.com/question/20293486" target="_blank" rel="external">http://www.zhihu.com/question/20293486</a></p>
-<p>有哪些 JS 调试技巧？ <a href="http://www.zhihu.com/question/20260762" target="_blank" rel="external">http://www.zhihu.com/question/20260762</a></p>
-<p>制作前端页面的时候，使用 &nbsp; 当作空格和使用 white-space: pre 的原生空格有什么区别？哪个更好一些？ <a href="http://www.zhihu.com/question/19895400" target="_blank" rel="external">http://www.zhihu.com/question/19895400</a></p>
-<p>前端招聘：<br>大公司面试前端开发类的职位时，更看重的是什么？ <a href="http://www.zhihu.com/question/19770923" target="_blank" rel="external">http://www.zhihu.com/question/19770923</a></p>
-<p>前端就业：<br>只专注于 JavaScript，好就业吗？有发展前景吗 <a href="http://www.zhihu.com/question/20149600" target="_blank" rel="external">http://www.zhihu.com/question/20149600</a></p>
-<p>前端漫谈：<br>HTML5 标准分裂会有什么影响? <a href="http://www.zhihu.com/question/20374574" target="_blank" rel="external">http://www.zhihu.com/question/20374574</a></p>
-<p>jQuery 宣布在未来的版本将不支持 IE6/7/8 是否明智？ <a href="http://www.zhihu.com/question/20322923" target="_blank" rel="external">http://www.zhihu.com/question/20322923</a></p>
-<p>Java 和 JavaScript 是什么关系？ <a href="http://www.zhihu.com/question/19913979" target="_blank" rel="external">http://www.zhihu.com/question/19913979</a></p>
-<p>国内有人或者公司用 LESS 写过 CSS 吗？ <a href="http://www.zhihu.com/question/19823925" target="_blank" rel="external">http://www.zhihu.com/question/19823925</a></p>
-<p>前端工程师，如何更顺畅的和后端工程师合作？ <a href="http://www.zhihu.com/question/20365599" target="_blank" rel="external">http://www.zhihu.com/question/20365599</a></p>
-<p>为什么很多国内公司不使用 jQuery 等开源 JS 框架（库），而选择自己开发 JavaScript 框架？<a href="http://www.zhihu.com/question/20099586" target="_blank" rel="external">http://www.zhihu.com/question/20099586</a></p>
-<p>Douglas Crockford 的《JavaScript 语言精粹》中有哪些观点是有争议的？ <a href="http://www.zhihu.com/question/20292563" target="_blank" rel="external">http://www.zhihu.com/question/20292563</a></p>
-<p>为什么有人说前端开发水很深，工作量有时比后台还多？ <a href="http://www.zhihu.com/question/20249919" target="_blank" rel="external">http://www.zhihu.com/question/20249919</a></p>
-<p>如何用通俗易懂的语言解释脚本（script）是什么？ <a href="http://www.zhihu.com/question/19901542" target="_blank" rel="external">http://www.zhihu.com/question/19901542</a></p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;收藏的一些和前端有关的信息  &lt;/p&gt;
     
     </summary>
     
