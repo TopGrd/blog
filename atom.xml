@@ -70,9 +70,9 @@
     <link href="http://topgrd.me/2016/12/23/setState/"/>
     <id>http://topgrd.me/2016/12/23/setState/</id>
     <published>2016-12-22T16:00:00.000Z</published>
-    <updated>2017-04-26T15:03:54.833Z</updated>
+    <updated>2017-04-27T02:24:48.604Z</updated>
     
-    <content type="html"><![CDATA[<h1 id="React中的setState是异步的"><a href="#React中的setState是异步的" class="headerlink" title="React中的setState是异步的"></a>React中的setState是异步的</h1><p>在写Select组件时，发现我换了选项后，结果依然返回之前的值，导致我的选项与值的展示不对应。以下是关于这个问题的解释：<br>先看源码ReactComponent.js中关于setState函数的文档  </p>
+    <content type="html"><![CDATA[<p>在写Select组件时，发现我换了选项后，结果依然返回之前的值，导致我的选项与值的展示不对应。以下是关于这个问题的解释：<br>先看源码ReactComponent.js中关于setState函数的文档  </p>
 <blockquote>
 <p>绝对不要直接改变 this.state，因为在之后调用 setState() 可能会替换掉你做的更改。把 this.state 当做不可变的。<br>setState() 不会立刻改变 this.state，而是创建一个即将处理的 state 转变。在调用该方法之后获取 this.state 的值可能会得到现有的值，而不是最新设置的值。<br>不保证 setState() 调用的同步性，为了提升性能，可能会批量执行 state 转变和 DOM 渲染。<br>setState() 将总是触发一次重绘，除非在 shouldComponentUpdate() 中实现了条件渲染逻辑。如果使用可变的对象，但是又不能在   shouldComponentUpdate() 中实现这种逻辑，仅在新 state 和之前的 state 存在差异的时候调用 setState() 可以避免不必要的重新渲染。  </p>
 </blockquote>
@@ -82,7 +82,9 @@
     
     <summary type="html">
     
-      &lt;h1 id=&quot;React中的setState是异步的&quot;&gt;&lt;a href=&quot;#React中的setState是异步的&quot; class=&quot;headerlink&quot; title=&quot;React中的setState是异步的&quot;&gt;&lt;/a&gt;React中的setState是异步的&lt;/h1&gt;&lt;p&gt;在写
+      &lt;p&gt;在写Select组件时，发现我换了选项后，结果依然返回之前的值，导致我的选项与值的展示不对应。以下是关于这个问题的解释：&lt;br&gt;先看源码ReactComponent.js中关于setState函数的文档  &lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;绝对不要直接改变 this
     
     </summary>
     
@@ -137,9 +139,9 @@
     <link href="http://topgrd.me/2016/12/01/FP2/"/>
     <id>http://topgrd.me/2016/12/01/FP2/</id>
     <published>2016-11-30T16:00:00.000Z</published>
-    <updated>2017-04-27T02:01:35.472Z</updated>
+    <updated>2017-04-27T02:24:30.014Z</updated>
     
-    <content type="html"><![CDATA[<h1 id="Functional-Programing-二"><a href="#Functional-Programing-二" class="headerlink" title="Functional Programing (二)"></a>Functional Programing (二)</h1><h2 id="Functor"><a href="#Functor" class="headerlink" title="Functor"></a>Functor</h2><h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>创建一个容器Container,里面可以存储任意值<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Container</span>(<span class="params">x</span>) </span>&#123;</div><div class="line">  <span class="keyword">this</span>.__value = x</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+    <content type="html"><![CDATA[<h2 id="Functor"><a href="#Functor" class="headerlink" title="Functor"></a>Functor</h2><h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>创建一个容器Container,里面可以存储任意值<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Container</span>(<span class="params">x</span>) </span>&#123;</div><div class="line">  <span class="keyword">this</span>.__value = x</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <a id="more"></a>
 <p>但是我们如果创建一个容器，每次都需要写new，可以创建一个of函数来避免。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Container.of = <span class="function"><span class="keyword">function</span> (<span class="params">x</span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Container(x)</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>这样，如果构造一个新的容器，则只需要<code>Container.of(x)</code>就行了。 如果容器中有了值，我们需要一个方法能够操作这个值。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Container.prototype.map = <span class="function"><span class="keyword">function</span> (<span class="params">f</span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> Container.of(f(<span class="keyword">this</span>.__value))</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -148,7 +150,7 @@
     
     <summary type="html">
     
-      &lt;h1 id=&quot;Functional-Programing-二&quot;&gt;&lt;a href=&quot;#Functional-Programing-二&quot; class=&quot;headerlink&quot; title=&quot;Functional Programing (二)&quot;&gt;&lt;/a&gt;Functional Programing (二)&lt;/h1&gt;&lt;h2 id=&quot;Functor&quot;&gt;&lt;a href=&quot;#Functor&quot; class=&quot;headerlink&quot; title=&quot;Functor&quot;&gt;&lt;/a&gt;Functor&lt;/h2&gt;&lt;h3 id=&quot;Container&quot;&gt;&lt;a href=&quot;#Container&quot; class=&quot;headerlink&quot; title=&quot;Container&quot;&gt;&lt;/a&gt;Container&lt;/h3&gt;&lt;p&gt;创建一个容器Container,里面可以存储任意值&lt;br&gt;&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;Container&lt;/span&gt;(&lt;span class=&quot;params&quot;&gt;x&lt;/span&gt;) &lt;/span&gt;&amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;.__value = x&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+      &lt;h2 id=&quot;Functor&quot;&gt;&lt;a href=&quot;#Functor&quot; class=&quot;headerlink&quot; title=&quot;Functor&quot;&gt;&lt;/a&gt;Functor&lt;/h2&gt;&lt;h3 id=&quot;Container&quot;&gt;&lt;a href=&quot;#Container&quot; class=&quot;headerlink&quot; title=&quot;Container&quot;&gt;&lt;/a&gt;Container&lt;/h3&gt;&lt;p&gt;创建一个容器Container,里面可以存储任意值&lt;br&gt;&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;Container&lt;/span&gt;(&lt;span class=&quot;params&quot;&gt;x&lt;/span&gt;) &lt;/span&gt;&amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;.__value = x&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
     
     </summary>
     

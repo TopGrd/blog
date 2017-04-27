@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://topgrd.me/2016/12/23/setState/</loc>
+    
+    <lastmod>2017-04-27T02:24:48.604Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://topgrd.me/2016/12/01/FP2/</loc>
+    
+    <lastmod>2017-04-27T02:24:30.014Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://topgrd.me/2017/04/17/svnhook/</loc>
     
     <lastmod>2017-04-27T02:17:54.369Z</lastmod>
@@ -47,13 +61,6 @@
     <loc>http://topgrd.me/2016/12/22/vue/</loc>
     
     <lastmod>2017-04-27T02:02:52.347Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://topgrd.me/2016/12/01/FP2/</loc>
-    
-    <lastmod>2017-04-27T02:01:35.472Z</lastmod>
     
   </url>
   
@@ -117,13 +124,6 @@
     <loc>http://topgrd.me/2014/11/16/2014-11-16-CSS_display/</loc>
     
     <lastmod>2017-04-26T15:04:38.783Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://topgrd.me/2016/12/23/setState/</loc>
-    
-    <lastmod>2017-04-26T15:03:54.833Z</lastmod>
     
   </url>
   
