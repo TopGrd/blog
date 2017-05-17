@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://topgrd.me/"/>
-  <updated>2017-04-27T02:07:06.101Z</updated>
+  <updated>2017-05-17T07:51:25.509Z</updated>
   <id>http://topgrd.me/</id>
   
   <author>
@@ -14,6 +14,33 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>手动实现一个VirtualDom (-)</title>
+    <link href="http://topgrd.me/2017/05/17/virtualdom/"/>
+    <id>http://topgrd.me/2017/05/17/virtualdom/</id>
+    <published>2017-05-16T16:00:00.000Z</published>
+    <updated>2017-05-17T07:51:25.509Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="什么是virtualdom"><a href="#什么是virtualdom" class="headerlink" title="什么是virtualdom"></a>什么是virtualdom</h2><p>virtualdom 中文翻译过来是虚拟Dom，它的意思是指使用 JavaScript 实现一个dom树的结构，即用 JavaScript对象标识Dom结构，插到文档中。有什么用呢，在我们过去更新一个dom节点时，我们会使用JS的dom相关api去操作浏览器元素节点，这样无疑对性能是有一定的负担的，但是使用虚拟Dom后，我们只需要在浏览器内存中维护一颗JavaScript树结构对象，当Dom需要更新时，在内存中重新建立一颗新的树，记录2个树的差异得到patch，然后将这个patch更新到页面的树结构对象上，从而更新视图。<br>在React，Vue等框架中都实现了 VirtualDom，以为它比操作原生Dom要快，对于VirtualDom而言，树上的节点不是元素节点，而是Components。  </p>
+<a id="more"></a>
+<h3 id="1-vnode"><a href="#1-vnode" class="headerlink" title="1.vnode"></a>1.vnode</h3><p>vnode即虚拟的dom节点，通常我们普通的dom节点如下<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"vn"</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">ul</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>hello<span class="tag">&lt;/<span class="name">li</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>world<span class="tag">&lt;/<span class="name">li</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>我们可以使用js来模拟这个dom结构<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">let</span> vd = &#123;</div><div class="line">  <span class="attr">nodename</span>: <span class="string">'div'</span>,</div><div class="line">  <span class="attr">attributes</span>: &#123;</div><div class="line">    <span class="attr">id</span>: <span class="string">'vn'</span></div><div class="line">  &#125;,</div><div class="line">  <span class="attr">children</span>: [</div><div class="line">    &#123;</div><div class="line">      <span class="attr">nodename</span>: <span class="string">'ul'</span>,</div><div class="line">      <span class="attr">children</span>: [</div><div class="line">        &#123;</div><div class="line">          <span class="attr">nodename</span>: <span class="string">'li'</span>,</div><div class="line">          <span class="attr">children</span>: [</div><div class="line">            <span class="string">'hello'</span></div><div class="line">          ]</div><div class="line">        &#125;,</div><div class="line">        &#123;</div><div class="line">          <span class="attr">nodename</span>: <span class="string">'li'</span>,</div><div class="line">          <span class="attr">children</span>: [</div><div class="line">            <span class="string">'world'</span></div><div class="line">          ]</div><div class="line">        &#125;</div><div class="line">      ]</div><div class="line">    &#125;</div><div class="line">  ]</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这样，就将真实dom的所有信息都标识出来了。</p>
+<h3 id="2-render函数"><a href="#2-render函数" class="headerlink" title="2.render函数"></a>2.render函数</h3><p>有了vnode，下一步就是渲染了。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> render = <span class="function"><span class="keyword">function</span> <span class="title">render</span>(<span class="params">vnode</span>) </span>&#123;</div><div class="line">  <span class="comment">// 如果子节点类型是文本，就创建文本节点</span></div><div class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> vnode === <span class="string">'string'</span>) &#123;</div><div class="line">    <span class="keyword">return</span> <span class="built_in">document</span>.createTextNode(vnode)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">let</span> node = <span class="built_in">document</span>.createElement(vnode.nodename)</div><div class="line">  <span class="comment">// 判断vnode里的attributes里的是property还是attribute</span></div><div class="line">  diffProps(node, vnode)</div><div class="line"></div><div class="line">  vnode.children.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">child</span>) </span>&#123;</div><div class="line">    node.appendChild(render(child))</div><div class="line">  &#125;)</div><div class="line">  <span class="keyword">return</span> node</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>在真实dom节点里，property和attribute不是一回事，所以我们需要有一个函数来判断attributes里的key值是property还是attribute<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> diffProps = <span class="function"><span class="keyword">function</span> <span class="title">diffProps</span>(<span class="params">node, vnode</span>) </span>&#123;</div><div class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> name <span class="keyword">in</span> vnode.attributes) &#123;</div><div class="line">    <span class="keyword">let</span> value = vnode.attributes[name]</div><div class="line">    <span class="comment">// 如果node里有这个name，表示它是property</span></div><div class="line">    <span class="keyword">if</span> (name <span class="keyword">in</span> node) &#123;</div><div class="line">      node[name] = value</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      node.setAttribute(name, value)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>ok，render函数算是完成了，让我们来用一下，看看它能否正常工作<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> vdom = render(vd)</div><div class="line"><span class="built_in">document</span>.body.appendChild(vdom)</div></pre></td></tr></table></figure></p>
+<p>output:<br><img src="/img/virtualdom.png" alt="vd"><br>good work!😁</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;什么是virtualdom&quot;&gt;&lt;a href=&quot;#什么是virtualdom&quot; class=&quot;headerlink&quot; title=&quot;什么是virtualdom&quot;&gt;&lt;/a&gt;什么是virtualdom&lt;/h2&gt;&lt;p&gt;virtualdom 中文翻译过来是虚拟Dom，它的意思是指使用 JavaScript 实现一个dom树的结构，即用 JavaScript对象标识Dom结构，插到文档中。有什么用呢，在我们过去更新一个dom节点时，我们会使用JS的dom相关api去操作浏览器元素节点，这样无疑对性能是有一定的负担的，但是使用虚拟Dom后，我们只需要在浏览器内存中维护一颗JavaScript树结构对象，当Dom需要更新时，在内存中重新建立一颗新的树，记录2个树的差异得到patch，然后将这个patch更新到页面的树结构对象上，从而更新视图。&lt;br&gt;在React，Vue等框架中都实现了 VirtualDom，以为它比操作原生Dom要快，对于VirtualDom而言，树上的节点不是元素节点，而是Components。  &lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>Windows下使用Headless Chrome</title>
@@ -397,26 +424,6 @@
   </entry>
   
   <entry>
-    <title>正则表达式(二)</title>
-    <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/"/>
-    <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/</id>
-    <published>2014-11-29T16:00:00.000Z</published>
-    <updated>2017-04-26T15:10:58.821Z</updated>
-    
-    <content type="html"><![CDATA[<a id="more"></a>  
-<h1 id="正则"><a href="#正则" class="headerlink" title="正则"></a>正则</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> pattern = <span class="regexp">/^([a-z]+)\s([0-9]&#123;4&#125;)/</span>; <span class="comment">//使用分组</span></div><div class="line"><span class="keyword">var</span> str = <span class="string">'hello 2014'</span>;</div><div class="line"><span class="keyword">var</span> arr = pattern.exec(str);</div><div class="line"><span class="comment">//alert(arr[0]);  //hello 2014 返回匹配到的整个字符串</span></div><div class="line"><span class="comment">//alert(arr[1]);    //hello          返回匹配到了第一个分组的字符串</span></div><div class="line"><span class="comment">//alert(arr[2]);    //2014           返回匹配到的第2个分组的字符串</span></div><div class="line"><span class="keyword">var</span> pat = <span class="regexp">/^([a-z]+)\s(?:[0-9]&#123;4&#125;)/</span>;</div><div class="line"><span class="comment">//alert(pat.exec(str));  //hello 2014,hello </span></div><div class="line"><span class="comment">//使用?:设置非捕获分组,该分组不会返回</span></div><div class="line"><span class="keyword">var</span> p = <span class="regexp">/(a?(b?(c?)))/</span>; <span class="comment">//嵌套分组 从外向里捕获</span></div><div class="line"><span class="keyword">var</span> s = <span class="string">'abc'</span>;</div><div class="line"><span class="comment">//alert(p.exec(s));     //abc abc bc c</span></div><div class="line"><span class="keyword">var</span> p1 = <span class="regexp">/he(?=llo)/</span>; <span class="comment">//he后面必须跟llo      f</span></div><div class="line"><span class="keyword">var</span> s1 = <span class="string">'hello'</span>;</div><div class="line"><span class="comment">//alert(p1.exec(s1));           //返回 he</span></div><div class="line"><span class="keyword">var</span> p2 = <span class="regexp">/\[/</span>; <span class="comment">// 用\来转义特殊字符</span></div><div class="line"><span class="keyword">var</span> s2 = <span class="string">'['</span>;</div><div class="line"><span class="comment">//alert(p2.test(s2));   //true</span></div><div class="line"><span class="keyword">var</span> p3 = <span class="regexp">/^\d+/gm</span>; <span class="comment">//m开启多行匹配 若没m则只替换第一行</span></div><div class="line"><span class="keyword">var</span> s3 = <span class="string">'1.first\n2.second\n3.third'</span>;</div><div class="line"><span class="comment">//alert(s3.replace(p3,'#'));</span></div><div class="line"><span class="comment">/* 结果</span></div><div class="line">#.first</div><div class="line">#.second</div><div class="line">#.third</div><div class="line">*/</div><div class="line"><span class="comment">//正则检测输入字符串是否大于5位且必须为字母与数字的混合</span></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">check</span>(<span class="params">str</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="regexp">/[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/</span>);</div><div class="line">    <span class="keyword">if</span> (reg.test(str) &amp;&amp; str.length &gt; <span class="number">5</span>) &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//alert(check('q52830to'));       true</span></div><div class="line">  <span class="comment">//alert(check('q528o'));      false</span></div></pre></td></tr></table></figure>]]></content>
-    
-    <summary type="html">
-    
-      &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
-&lt;h1 id=&quot;正则&quot;&gt;&lt;a href=&quot;#正则&quot; class=&quot;headerlink&quot; title=&quot;正则&quot;&gt;&lt;/a&gt;正则&lt;/h1&gt;&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gu
-    
-    </summary>
-    
-    
-  </entry>
-  
-  <entry>
     <title>正则表达式(一)</title>
     <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(1)/"/>
     <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(1)/</id>
@@ -496,6 +503,26 @@ var paten4=/3[^8]3/;
   </entry>
   
   <entry>
+    <title>正则表达式(二)</title>
+    <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/"/>
+    <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/</id>
+    <published>2014-11-29T16:00:00.000Z</published>
+    <updated>2017-04-26T15:10:58.821Z</updated>
+    
+    <content type="html"><![CDATA[<a id="more"></a>  
+<h1 id="正则"><a href="#正则" class="headerlink" title="正则"></a>正则</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> pattern = <span class="regexp">/^([a-z]+)\s([0-9]&#123;4&#125;)/</span>; <span class="comment">//使用分组</span></div><div class="line"><span class="keyword">var</span> str = <span class="string">'hello 2014'</span>;</div><div class="line"><span class="keyword">var</span> arr = pattern.exec(str);</div><div class="line"><span class="comment">//alert(arr[0]);  //hello 2014 返回匹配到的整个字符串</span></div><div class="line"><span class="comment">//alert(arr[1]);    //hello          返回匹配到了第一个分组的字符串</span></div><div class="line"><span class="comment">//alert(arr[2]);    //2014           返回匹配到的第2个分组的字符串</span></div><div class="line"><span class="keyword">var</span> pat = <span class="regexp">/^([a-z]+)\s(?:[0-9]&#123;4&#125;)/</span>;</div><div class="line"><span class="comment">//alert(pat.exec(str));  //hello 2014,hello </span></div><div class="line"><span class="comment">//使用?:设置非捕获分组,该分组不会返回</span></div><div class="line"><span class="keyword">var</span> p = <span class="regexp">/(a?(b?(c?)))/</span>; <span class="comment">//嵌套分组 从外向里捕获</span></div><div class="line"><span class="keyword">var</span> s = <span class="string">'abc'</span>;</div><div class="line"><span class="comment">//alert(p.exec(s));     //abc abc bc c</span></div><div class="line"><span class="keyword">var</span> p1 = <span class="regexp">/he(?=llo)/</span>; <span class="comment">//he后面必须跟llo      f</span></div><div class="line"><span class="keyword">var</span> s1 = <span class="string">'hello'</span>;</div><div class="line"><span class="comment">//alert(p1.exec(s1));           //返回 he</span></div><div class="line"><span class="keyword">var</span> p2 = <span class="regexp">/\[/</span>; <span class="comment">// 用\来转义特殊字符</span></div><div class="line"><span class="keyword">var</span> s2 = <span class="string">'['</span>;</div><div class="line"><span class="comment">//alert(p2.test(s2));   //true</span></div><div class="line"><span class="keyword">var</span> p3 = <span class="regexp">/^\d+/gm</span>; <span class="comment">//m开启多行匹配 若没m则只替换第一行</span></div><div class="line"><span class="keyword">var</span> s3 = <span class="string">'1.first\n2.second\n3.third'</span>;</div><div class="line"><span class="comment">//alert(s3.replace(p3,'#'));</span></div><div class="line"><span class="comment">/* 结果</span></div><div class="line">#.first</div><div class="line">#.second</div><div class="line">#.third</div><div class="line">*/</div><div class="line"><span class="comment">//正则检测输入字符串是否大于5位且必须为字母与数字的混合</span></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">check</span>(<span class="params">str</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="regexp">/[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/</span>);</div><div class="line">    <span class="keyword">if</span> (reg.test(str) &amp;&amp; str.length &gt; <span class="number">5</span>) &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//alert(check('q52830to'));       true</span></div><div class="line">  <span class="comment">//alert(check('q528o'));      false</span></div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
+&lt;h1 id=&quot;正则&quot;&gt;&lt;a href=&quot;#正则&quot; class=&quot;headerlink&quot; title=&quot;正则&quot;&gt;&lt;/a&gt;正则&lt;/h1&gt;&lt;figure class=&quot;highlight js&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gu
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
     <title>一片叶子落下来</title>
     <link href="http://topgrd.me/2014/11/26/2014-11-26-leavefallen/"/>
     <id>http://topgrd.me/2014/11/26/2014-11-26-leavefallen/</id>
@@ -558,65 +585,6 @@ var paten4=/3[^8]3/;
     <summary type="html">
     
       &lt;p&gt;javascript callback.  &lt;/p&gt;
-    
-    </summary>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>Markdown语法详解</title>
-    <link href="http://topgrd.me/2014/11/17/2014-11-17-Markdown-stynax/"/>
-    <id>http://topgrd.me/2014/11/17/2014-11-17-Markdown-stynax/</id>
-    <published>2014-11-16T16:00:00.000Z</published>
-    <updated>2017-04-26T15:05:01.224Z</updated>
-    
-    <content type="html"><![CDATA[<p>Markdown 的目标是实现「易读易写」。<br>可读性，无论如何，都是最重要的。一份使用 Markdown 格式撰写的文件应该可以直接以纯文本发布，并且看起来不会像是由许多标签或是格式指令所构成。Markdown 语法受到一些既有 text-to-HTML 格式的影响，包括Setext、atx、Textile、reStructuredText、Grutatext 和 EtText，而最大灵感来源其实是纯文本电子邮件的格式。</p>
-<a id="more"></a>  
-<h1 id="Markdown语法详解"><a href="#Markdown语法详解" class="headerlink" title="Markdown语法详解"></a>Markdown语法详解</h1><h1 id="标题"><a href="#标题" class="headerlink" title="标题"></a>标题</h1><p>Markdown 支持两种标题的语法，类 Setext 和类 atx 形式.  </p>
-<p>类 Setext 形式是用底线的形式，利用 <code>=</code> 最高阶标题）和 <code>-</code>（第二阶标题），例如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">H1</div><div class="line">=======</div><div class="line">H2</div><div class="line">-----</div></pre></td></tr></table></figure></p>
-<p>任何数量的=和-都是可以的.</p>
-<p>类 Atx 形式则是在行首插入 1 到 6 个 <code>#</code> ，对应到标题 1 到 6 阶，例如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"># H1  </div><div class="line">## H2  </div><div class="line">...  </div><div class="line">###### H6</div></pre></td></tr></table></figure></p>
-<h2 id="区块引用-Blockquotes"><a href="#区块引用-Blockquotes" class="headerlink" title="区块引用 Blockquotes"></a>区块引用 Blockquotes</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; some tingsome tingsome tingsome tingsome tingsome tingsome </div><div class="line">tingsome tingsome tingsome tingsome ting</div></pre></td></tr></table></figure>
-<p>或者<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; some tingsome tingsome ting</div><div class="line">&gt; some tingsome ting2313</div></pre></td></tr></table></figure></p>
-<p>效果</p>
-<blockquote>
-<p>some tingsome ting</p>
-</blockquote>
-<h2 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h2><p>无序列表使用星号、加号或是减号作为列表标记：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">* apple  </div><div class="line">* banana  </div><div class="line">* tomato</div></pre></td></tr></table></figure></p>
-<p>效果  </p>
-<ul>
-<li>apple</li>
-<li>banana</li>
-<li>tomato  </li>
-</ul>
-<p>有序列表则使用数字接着一个英文句点:<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">1. apple</div><div class="line">2. banana</div><div class="line">3. tomato</div></pre></td></tr></table></figure></p>
-<p>效果</p>
-<ol>
-<li>apple</li>
-<li>banana</li>
-<li>tomato</li>
-</ol>
-<h2 id="代码区块"><a href="#代码区块" class="headerlink" title="代码区块"></a>代码区块</h2><p>Markdown 中建立代码区块很简单，只需要按3个`即可，例如<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">funtion add(x, y) &#123;</div><div class="line">    <span class="keyword">return</span> x + y</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<h2 id="分割线"><a href="#分割线" class="headerlink" title="分割线"></a>分割线</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">* * *</div><div class="line"></div><div class="line">***</div><div class="line"></div><div class="line">*****</div><div class="line"></div><div class="line">- - -</div><div class="line"></div><div class="line">---------------------------------------</div></pre></td></tr></table></figure>
-<p>得到  </p>
-<hr>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p><code>[this is a link](http://github.com/topgrd)</code><br>产生<br><a href="http://github.com/topgrd" target="_blank" rel="external">this is a link</a>  </p>
-<p>如果你是要链接到同样主机的资源，你可以使用相对路径：  </p>
-<p><code>See my [About](/about/) page for details</code><br>如果你还想要加上链接的 title 文字，只要在网址后面，用双引号把 title 文字包起来即可，例如：<br><code>[this is a link](http://github.com/topgrd/ &quot;dasda&quot;)</code><br> 隐式链接标记功能让你可以省略指定链接标记，这种情形下，链接标记会视为等同于链接文字，要用隐式链接标记只要在链接文字后面加上一个空的方括号，如果你要让 “[Google]” 链接到 google.com，你可以简化成：<br> <code>[Google]: http://google.com</code><br>链接的定义可以放在文件中的任何一个地方，我比较偏好直接放在链接出现段落的后面，你也可以把它放在文件最后面，就像是注解一样.<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[Google]: http://google.com</div><div class="line">[id]: <span class="tag">&lt;<span class="name">http:</span>//<span class="attr">example.com</span>/&gt;</span>  "Optional Title Here"</div></pre></td></tr></table></figure></p>
-<p>##强调<br>Markdown 使用星号（*）和底线（_）作为标记强调字词的符号，被 * 或 _ 包围的字词会被转成用 <em> 标签包围，用两个 * 或 _ 包起来的话，则会被转成 <strong>，例如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">*single asterisks*</div><div class="line">_single underscores_</div><div class="line">**double asterisks**</div><div class="line">__double underscores__</div></pre></td></tr></table></figure></strong></em></p>
-<p>表现为  </p>
-<p><em>single asterisks</em></p>
-<p><em>single underscores</em></p>
-<p><strong>double asterisks</strong></p>
-<p><strong>double underscores</strong>```</p>
-<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>如果要标记一小段行内代码，你可以用反引号把它包起来（`），例如：<br><code>Use the `printf()`function</code><br>会表现<br>Use the <code>printf()</code>function  </p>
-<h2 id="图片"><a href="#图片" class="headerlink" title="图片"></a>图片</h2><p>行内式<br><code>![Alt text](/path/to/img.jpg)</code><br><code>![Alt text](/path/to/img.jpg &quot;Optional title&quot;)</code><br>例<br><img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1493227960015&amp;di=9c93926c4e4880f3978601bd76df0535&amp;imgtype=0&amp;src=http%3A%2F%2Fi0.hdslb.com%2Fbfs%2Farchive%2Fa8660e7c4e07769471def66bfe71ff2eed5b51a7.jpg" alt="photo"><br>参考式<br><code>![Alt text][id]</code><br>id的定义<br><code>[id]: url/to/img &quot;option title attribute&quot;</code><br>到目前为止， Markdown 还没有办法指定图片的宽高，如果你需要的话，你可以使用普通的 <code>&lt;img&gt;</code> 标签。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;Markdown 的目标是实现「易读易写」。&lt;br&gt;可读性，无论如何，都是最重要的。一份使用 Markdown 格式撰写的文件应该可以直接以纯文本发布，并且看起来不会像是由许多标签或是格式指令所构成。Markdown 语法受到一些既有 text-to-HTML 格式的影响，包括Setext、atx、Textile、reStructuredText、Grutatext 和 EtText，而最大灵感来源其实是纯文本电子邮件的格式。&lt;/p&gt;
     
     </summary>
     
