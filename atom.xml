@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://topgrd.me/"/>
-  <updated>2017-06-15T03:01:38.246Z</updated>
+  <updated>2017-12-04T12:19:42.208Z</updated>
   <id>http://topgrd.me/</id>
   
   <author>
@@ -16,11 +16,33 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Tracking.js Javascript的计算机视觉库</title>
+    <link href="http://topgrd.me/2017/12/04/tracking/"/>
+    <id>http://topgrd.me/2017/12/04/tracking/</id>
+    <published>2017-12-03T16:00:00.000Z</published>
+    <updated>2017-12-04T12:19:42.208Z</updated>
+    
+    <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>惭愧惭愧，距离上次写博客已经很久很久了。  </p>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>tracking.js库将不同的计算机视觉算法和技术带入浏览器环境。通过使用现代HTML5规范，让你能够进行实时的颜色跟踪，人脸检测等等。所有这些都使用轻量级核心（〜7 KB）和直观的界面。<br><a id="more"></a>  </p>
+<h2 id="快速使用"><a href="#快速使用" class="headerlink" title="快速使用"></a>快速使用</h2><p>首先，从官方给的链接里将<a href="https://github.com/eduardolundgren/tracking.js/archive/master.zip" target="_blank" rel="external">trackingjs</a>库下载下来,引入到你的html文件中。如果需要进行人脸识别的话，还需引入下载源文件夹下<code>build/data</code>下的几个文件，如下图所示。<br><img src="/img/trackCode1.png" alt="code1"><br>当然，现代化前端开发是可能需要使用ES6的<code>import</code>方式引入的，这样需要改下源码，因为tracking.js目前还不支持模块化。首先通过<code>npm install tracking</code>安装，然后从node_modules中找到名为tracking的包，修改build下tracking.js文件，在最后加一行加上: <code>module.exports = window.tracking</code>。这样你就可以在你的js文件中<code>import tracking from &#39;tracking&#39;</code>了😁。不过注意，文章下面的示例都是使用html引入为例的。<br>在图中，我们还创建了一个class为continer的元素，并在这个父元素中放了2个img元素，这两个img就是我们需要识别的图像。<br><img src="/img/google2.png" alt="google"><br><img src="/img/faces.jpg" alt="faces"><br>第一个我们引入了Google的logo的图片，用来进行颜色跟踪。<br>第二个是张人脸图片，用来进行人脸识别。<br>在这里，我们想要跟踪Google logo中蓝色和黄色以及品红色并将它们标记出来。代码很简单:<br><img src="/img/trackCode2.png" alt="code2"><br>首先获取container父元素，后面创建识别区域时需要用到，再获取目标图片元素节点。<br>因为tracking.js默认支持识别的基础颜色为 [‘magenta’, ‘cyan’, ‘yellow’]，所以我们需要自己去ColorTracker的所提供的registerColor接口注册蓝色的rgb范围。registerColor第一个参数为注册颜色的名称，第二个参数是个匿名函数，函数的参数分别对应RGB色值的R, G, B。在函数里判断rgb范围是否是你需要识别的颜色范围，根据返回的布尔值确定。<br>实力例化一个colorTrakcer对象并将所要跟踪颜色的名称数组传入，然后利用track方法识别目标图片，并传入实例化对象。<br>tracking.js内部实现track是使用的事件模式，所以需要监听track事件，并在回调函数里进行处理。它会将所识别的结果赋给回调函数第一个参数的data属性。我们识别Google logo的data：<br><img src="/img/t1.png" alt="t1"><br>返回结果里包含了识别区域的宽高和原点位置，所以我们就可以根据其将识别出的区域标记出来。由于Google logo中没有品红色，所以没有相关区域。<br><img src="/img/t2.png" alt="t2"><br>人脸识别和颜色识别的代码差别不大，API基本一致，不过需要实例化的对象是ObjectTracker，传入的数组可以是[‘face’, ‘eye’, ‘mouth’]，我们这里选择识别face和eye，代码如下：<br><img src="/img/trackCode3.png" alt="code3"><br>识别结果准确度还是蛮高的。<br><img src="/img/t3.png" alt="t3"></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;惭愧惭愧，距离上次写博客已经很久很久了。  &lt;/p&gt;
+&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;tracking.js库将不同的计算机视觉算法和技术带入浏览器环境。通过使用现代HTML5规范，让你能够进行实时的颜色跟踪，人脸检测等等。所有这些都使用轻量级核心（〜7 KB）和直观的界面。&lt;br&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
     <title>手动实现一个VirtualDom</title>
     <link href="http://topgrd.me/2017/05/17/virtualdom/"/>
     <id>http://topgrd.me/2017/05/17/virtualdom/</id>
-    <published>2017-05-16T15:00:00.000Z</published>
-    <updated>2017-06-15T03:01:38.246Z</updated>
+    <published>2017-05-16T16:00:00.000Z</published>
+    <updated>2017-06-15T03:01:38.245Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h2 id="什么是virtualdom"><a href="#什么是virtualdom" class="headerlink" title="什么是virtualdom"></a>什么是virtualdom</h2><p>virtualdom 中文翻译过来是虚拟Dom，它的意思是指使用 JavaScript 实现一个dom树的结构，即用 JavaScript对象标识Dom结构，插到文档中。有什么用呢，在我们过去更新一个dom节点时，我们会使用JS的dom相关api去操作浏览器元素节点，这样无疑对性能是有一定的负担的，但是使用虚拟Dom后，我们只需要在浏览器内存中维护一颗JavaScript树结构对象，当Dom需要更新时，在内存中重新建立一颗新的树，记录2个树的差异得到patch，然后将这个patch更新到页面的树结构对象上，从而更新视图。<br>在React，Vue等框架中都实现了 VirtualDom，以为它比操作原生Dom要快，对于VirtualDom而言，树上的节点不是元素节点，而是Components。  </p>
 <a id="more"></a>
@@ -46,7 +68,7 @@
     <title>Windows下使用Headless Chrome</title>
     <link href="http://topgrd.me/2017/04/26/headless-Chrome/"/>
     <id>http://topgrd.me/2017/04/26/headless-Chrome/</id>
-    <published>2017-04-25T15:00:00.000Z</published>
+    <published>2017-04-25T16:00:00.000Z</published>
     <updated>2017-04-27T02:07:06.101Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>google在4月的时候宣布他们将在chrome 59中支持headless模式，headless模式即chrome会以一种静默的模式启动，他不会启用界面，但是他在后台的行为与正常浏览器一样。  </p>
@@ -73,8 +95,8 @@
     <title>曲线救国之SVN客户端钩子</title>
     <link href="http://topgrd.me/2017/04/17/svnhook/"/>
     <id>http://topgrd.me/2017/04/17/svnhook/</id>
-    <published>2017-04-16T15:00:00.000Z</published>
-    <updated>2017-04-27T02:17:54.370Z</updated>
+    <published>2017-04-16T16:00:00.000Z</published>
+    <updated>2017-04-27T02:17:54.369Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>此方法使用于没有权限到SVN仓库服务器设置钩子。  </p>
 <h2 id="How-to-do"><a href="#How-to-do" class="headerlink" title="How to do"></a>How to do</h2><p>首先客户端的hook是在TortoiseSVN里支持的，所以得先安装TortoiseSVN，我相信使用SVN的大部分人都安装了这个软件。然后在TortoiseSVN的设置里找到hook script。<br><img src="/img/setting.png" alt="set"><br>然后点击add添加自己的脚本  </p>
@@ -96,7 +118,7 @@
     <title>Vue总结</title>
     <link href="http://topgrd.me/2016/12/22/vue/"/>
     <id>http://topgrd.me/2016/12/22/vue/</id>
-    <published>2016-12-21T15:00:00.000Z</published>
+    <published>2016-12-21T16:00:00.000Z</published>
     <updated>2017-04-27T02:02:52.347Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h1 id="在使用Vue-ElementUI-Vuex-Vue-Router中遇到的问题以及解决"><a href="#在使用Vue-ElementUI-Vuex-Vue-Router中遇到的问题以及解决" class="headerlink" title="在使用Vue+ElementUI+Vuex+Vue-Router中遇到的问题以及解决"></a>在使用Vue+ElementUI+Vuex+Vue-Router中遇到的问题以及解决</h1><p>初学Vue，直接实战，目前为止遇到一些问题总结。  </p>
@@ -139,8 +161,8 @@
     <title>Functional Programing（二)</title>
     <link href="http://topgrd.me/2016/12/01/FP2/"/>
     <id>http://topgrd.me/2016/12/01/FP2/</id>
-    <published>2016-11-30T15:00:00.000Z</published>
-    <updated>2017-04-27T02:24:30.015Z</updated>
+    <published>2016-11-30T16:00:00.000Z</published>
+    <updated>2017-04-27T02:24:30.014Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h2 id="Functor"><a href="#Functor" class="headerlink" title="Functor"></a>Functor</h2><h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>创建一个容器Container,里面可以存储任意值<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Container</span>(<span class="params">x</span>) </span>&#123;</div><div class="line">  <span class="keyword">this</span>.__value = x</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <a id="more"></a>
@@ -162,8 +184,8 @@
     <title>Functional Programing（一)</title>
     <link href="http://topgrd.me/2016/11/24/FP1/"/>
     <id>http://topgrd.me/2016/11/24/FP1/</id>
-    <published>2016-11-23T15:00:00.000Z</published>
-    <updated>2017-05-17T06:58:04.981Z</updated>
+    <published>2016-11-23T16:00:00.000Z</published>
+    <updated>2017-05-17T06:58:04.980Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>最近看了函数式编程，传统方式上我们一般是命令式编程，而FP是一种完全不同的编程思想， 他会让你拥有不同的编程体验。<br>在数学上，我们定义一个函数y=f(x)或者y=f(g(x))。当我们输入固定的x值时，函数y的值是一定的。而函数式编程即是这么一种风格，它强调副作用最小，鼓励使用不可变数据和纯函数。在如今的js界，函数式编程变的越来越留下。redux，immutable，Rxjs等都是函数式编程的实践。  </p>
 <a id="more"></a>
@@ -199,8 +221,8 @@
     <title>nproxy</title>
     <link href="http://topgrd.me/2016/09/16/proxy/"/>
     <id>http://topgrd.me/2016/09/16/proxy/</id>
-    <published>2016-09-15T15:00:00.000Z</published>
-    <updated>2017-04-28T06:35:49.046Z</updated>
+    <published>2016-09-15T16:00:00.000Z</published>
+    <updated>2017-04-28T06:35:49.045Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h1 id="使用反向代理，本地文件调试线上环境"><a href="#使用反向代理，本地文件调试线上环境" class="headerlink" title="使用反向代理，本地文件调试线上环境"></a>使用反向代理，本地文件调试线上环境</h1><p>使用反向代理，我们可以用浏览器访问线上环境时，将需要调试修改的文件代理到本地，这样只需要在本地修改文件，就可以在你的浏览器上预览到想要的效果，例如用本地未混淆的js替换线上的js，或者其他js，html，image等等。最后修改完成后再发布，调试极为方便。  </p>
 <h2 id="反向代理"><a href="#反向代理" class="headerlink" title="反向代理"></a>反向代理</h2><p>在本地和服务器直接加一层服务，然后用这个代理服务去监听并拦截客户端发出的请求，然后用代理服务代理请求到你指定的去处。<br><img src="/img/proxys.png" alt="proxy">  </p>
@@ -230,8 +252,8 @@
     <title>React中的setState是异步的</title>
     <link href="http://topgrd.me/2016/07/23/setState/"/>
     <id>http://topgrd.me/2016/07/23/setState/</id>
-    <published>2016-07-22T15:00:00.000Z</published>
-    <updated>2017-04-27T05:23:35.987Z</updated>
+    <published>2016-07-22T16:00:00.000Z</published>
+    <updated>2017-04-27T05:23:35.986Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>在写Select组件时，发现我换了选项后，结果依然返回之前的值，导致我的选项与值的展示不对应。以下是关于这个问题的解释：<br>先看源码ReactComponent.js中关于setState函数的文档  </p>
 <blockquote>
@@ -256,8 +278,8 @@
     <title>在工作中遇到的浏览器兼容问题总结</title>
     <link href="http://topgrd.me/2016/05/13/compatibility/"/>
     <id>http://topgrd.me/2016/05/13/compatibility/</id>
-    <published>2016-05-12T15:00:00.000Z</published>
-    <updated>2017-04-27T01:59:27.132Z</updated>
+    <published>2016-05-12T16:00:00.000Z</published>
+    <updated>2017-04-27T01:59:27.131Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>#浏览器兼容  </p>
 <ul>
@@ -288,7 +310,7 @@
     <title>一道题</title>
     <link href="http://topgrd.me/2016/04/01/add/"/>
     <id>http://topgrd.me/2016/04/01/add/</id>
-    <published>2016-03-31T15:00:00.000Z</published>
+    <published>2016-03-31T16:00:00.000Z</published>
     <updated>2017-04-27T01:58:29.334Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h1 id="一道题"><a href="#一道题" class="headerlink" title="一道题"></a>一道题</h1><p>实现add(x)输出x, add(x)(y)输出x+y的结果，add(x)(y)(z)则输出x+y+z…可以无限调用。<br>当我第一眼看到这个题的时候，马上想到的是函数式编程，利用compose实现。要实现这样的函数，必须要改写函数的toString和valueOf方法。<br><a id="more"></a></p>
@@ -308,7 +330,7 @@
     <title>React + ES6 中绑定this</title>
     <link href="http://topgrd.me/2015/11/03/NoAutoBinding/"/>
     <id>http://topgrd.me/2015/11/03/NoAutoBinding/</id>
-    <published>2015-11-02T15:00:00.000Z</published>
+    <published>2015-11-02T16:00:00.000Z</published>
     <updated>2017-04-26T15:01:48.316Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h1 id="React-ES6-中绑定this"><a href="#React-ES6-中绑定this" class="headerlink" title="React + ES6 中绑定this"></a>React + ES6 中绑定this</h1><p>在使用React.creatClass时，如果给一个组件绑定事件（onClick，onChange等），是不需要将this在bind到上面的，然而在使用ES6时，是不会自动绑定this的。why？<br>Go Doc:  </p>
@@ -339,8 +361,8 @@
     <title>React中的组件写法</title>
     <link href="http://topgrd.me/2015/10/15/noStateComponent/"/>
     <id>http://topgrd.me/2015/10/15/noStateComponent/</id>
-    <published>2015-10-14T15:00:00.000Z</published>
-    <updated>2017-04-26T15:02:59.708Z</updated>
+    <published>2015-10-14T16:00:00.000Z</published>
+    <updated>2017-04-26T15:02:59.707Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><h1 id="React中的组件写法"><a href="#React中的组件写法" class="headerlink" title="React中的组件写法"></a>React中的组件写法</h1><h2 id="React-createClass-ES5"><a href="#React-createClass-ES5" class="headerlink" title="React.createClass  (ES5)"></a>React.createClass  (ES5)</h2><p>在React刚出世的时候，官方是这样定义一个react组件的。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> Count = React.createClass(&#123;</div><div class="line">  <span class="attr">defaultProps</span>: &#123;</div><div class="line">    <span class="attr">initialValue</span>: <span class="number">0</span></div><div class="line">  &#125;,</div><div class="line">  <span class="attr">getInitialState</span>: &#123;</div><div class="line">    retrun &#123;</div><div class="line">      <span class="attr">count</span>: <span class="number">0</span></div><div class="line">    &#125;</div><div class="line">  &#125;,</div><div class="line">  <span class="attr">onChangeHandler</span>: <span class="function"><span class="keyword">function</span> (<span class="params">e</span>) </span>&#123;</div><div class="line">    <span class="keyword">this</span>.setState(&#123;</div><div class="line">      <span class="attr">count</span>: e.target.value</div><div class="line">    &#125;)</div><div class="line">  &#125;,</div><div class="line">  <span class="attr">render</span>: <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">      <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">        Insert Your Count</div><div class="line">        <span class="tag">&lt;<span class="name">input</span></span></div><div class="line">          <span class="attr">onChange</span>=<span class="string">&#123;this.onChangeHandler&#125;</span> <span class="attr">value</span>=<span class="string">&#123;this.state.count&#125;</span> /&gt;</div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    )</div><div class="line">  &#125;</div><div class="line">&#125;);</div><div class="line">ReactDOM.render(<span class="tag">&lt;<span class="name">Count</span> /&gt;</span>, document.getElementById('app'));</div></pre></td></tr></table></figure></p>
 <h2 id="extends-React-Component-ES6"><a href="#extends-React-Component-ES6" class="headerlink" title="extends React.Component (ES6)"></a>extends React.Component (ES6)</h2><p>随着ES6的流行，官方使用了ES6中的Class来创建组件，继承自React.Component，Component是React组件的基类，封装了react组件的属性与方法。在这种写法中，要注意的是this绑定，详情参见我的往期博文。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Count</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span> </span>&#123;</div><div class="line">  <span class="keyword">constructor</span>(props) &#123;</div><div class="line">    <span class="keyword">super</span>(props);</div><div class="line">    <span class="keyword">this</span>.state = &#123;</div><div class="line">      <span class="attr">count</span>: <span class="number">0</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  onChangeHandler(e) &#123;</div><div class="line">    <span class="keyword">this</span>.setState(&#123;</div><div class="line">      <span class="attr">count</span>: e.target.value</div><div class="line">    &#125;)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  render() &#123;</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">      <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">        Insert Your Count</div><div class="line">        <span class="tag">&lt;<span class="name">input</span></span></div><div class="line">          <span class="attr">onChange</span>=<span class="string">&#123;(e)</span>=&gt;this.onChangeHandler(e)&#125; value=&#123;this.state.count&#125; /&gt;</div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    )</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">Count.defaultProps = &#123;</div><div class="line">  initialValue: 0</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -360,8 +382,8 @@
     <title>margin相关问题</title>
     <link href="http://topgrd.me/2014/12/15/2014-12-15-marginproblem/"/>
     <id>http://topgrd.me/2014/12/15/2014-12-15-marginproblem/</id>
-    <published>2014-12-14T15:00:00.000Z</published>
-    <updated>2017-04-27T02:17:21.998Z</updated>
+    <published>2014-12-14T16:00:00.000Z</published>
+    <updated>2017-04-27T02:17:21.997Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><a id="more"></a>  
 <p>##上下margin叠加<br>当两个元素为上下关系，且都具有margin属性时，此时margin会造成外边距叠加。<br>例如，页面有2个div id为a和b，他们的css如下:<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="selector-id">#a</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">&#125;  </div><div class="line"><span class="selector-id">#b</span>&#123;</div><div class="line">  <span class="attribute">width</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">height</span>:<span class="number">100px</span>;</div><div class="line">  <span class="attribute">background</span>:red;</div><div class="line">  <span class="attribute">margin</span>:<span class="number">10px</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -384,8 +406,8 @@
     <title>node.js连接mysql数据库</title>
     <link href="http://topgrd.me/2014/12/03/2014-12-03-nodejs_connect_mysql/"/>
     <id>http://topgrd.me/2014/12/03/2014-12-03-nodejs_connect_mysql/</id>
-    <published>2014-12-02T15:00:00.000Z</published>
-    <updated>2017-04-27T02:17:15.728Z</updated>
+    <published>2014-12-02T16:00:00.000Z</published>
+    <updated>2017-04-27T02:17:15.727Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>今天在学习node时，发现书上的例子是node连接mongodb数据库的，没有提到mysql,而我还没有下载mongodb，就先想连接电脑上已经有点mysql，之前做的东西数据库基本上都用的mysql，经过上网查找相关信息，终于知道如何用node连接mysql进行数据库操作了.<br><a id="more"></a><br>首先安装mysql包(nodejs连接mysql的包有好几种(db-mysql..)，这里我用的是mysql。</p>
 <p><code>npm install mysql</code></p>
@@ -406,7 +428,7 @@
     <title>正则表达式(三)</title>
     <link href="http://topgrd.me/2014/12/01/2014-12-01-RegExp(3)/"/>
     <id>http://topgrd.me/2014/12/01/2014-12-01-RegExp(3)/</id>
-    <published>2014-11-30T15:00:00.000Z</published>
+    <published>2014-11-30T16:00:00.000Z</published>
     <updated>2017-04-26T14:57:19.922Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>简单的正则验证<br><a id="more"></a>  </p>
@@ -423,11 +445,31 @@
   </entry>
   
   <entry>
+    <title>正则表达式(二)</title>
+    <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/"/>
+    <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/</id>
+    <published>2014-11-29T16:00:00.000Z</published>
+    <updated>2017-04-26T15:10:58.821Z</updated>
+    
+    <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><a id="more"></a>  
+<h1 id="正则"><a href="#正则" class="headerlink" title="正则"></a>正则</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> pattern = <span class="regexp">/^([a-z]+)\s([0-9]&#123;4&#125;)/</span>; <span class="comment">//使用分组</span></div><div class="line"><span class="keyword">var</span> str = <span class="string">'hello 2014'</span>;</div><div class="line"><span class="keyword">var</span> arr = pattern.exec(str);</div><div class="line"><span class="comment">//alert(arr[0]);  //hello 2014 返回匹配到的整个字符串</span></div><div class="line"><span class="comment">//alert(arr[1]);    //hello          返回匹配到了第一个分组的字符串</span></div><div class="line"><span class="comment">//alert(arr[2]);    //2014           返回匹配到的第2个分组的字符串</span></div><div class="line"><span class="keyword">var</span> pat = <span class="regexp">/^([a-z]+)\s(?:[0-9]&#123;4&#125;)/</span>;</div><div class="line"><span class="comment">//alert(pat.exec(str));  //hello 2014,hello </span></div><div class="line"><span class="comment">//使用?:设置非捕获分组,该分组不会返回</span></div><div class="line"><span class="keyword">var</span> p = <span class="regexp">/(a?(b?(c?)))/</span>; <span class="comment">//嵌套分组 从外向里捕获</span></div><div class="line"><span class="keyword">var</span> s = <span class="string">'abc'</span>;</div><div class="line"><span class="comment">//alert(p.exec(s));     //abc abc bc c</span></div><div class="line"><span class="keyword">var</span> p1 = <span class="regexp">/he(?=llo)/</span>; <span class="comment">//he后面必须跟llo      f</span></div><div class="line"><span class="keyword">var</span> s1 = <span class="string">'hello'</span>;</div><div class="line"><span class="comment">//alert(p1.exec(s1));           //返回 he</span></div><div class="line"><span class="keyword">var</span> p2 = <span class="regexp">/\[/</span>; <span class="comment">// 用\来转义特殊字符</span></div><div class="line"><span class="keyword">var</span> s2 = <span class="string">'['</span>;</div><div class="line"><span class="comment">//alert(p2.test(s2));   //true</span></div><div class="line"><span class="keyword">var</span> p3 = <span class="regexp">/^\d+/gm</span>; <span class="comment">//m开启多行匹配 若没m则只替换第一行</span></div><div class="line"><span class="keyword">var</span> s3 = <span class="string">'1.first\n2.second\n3.third'</span>;</div><div class="line"><span class="comment">//alert(s3.replace(p3,'#'));</span></div><div class="line"><span class="comment">/* 结果</span></div><div class="line">#.first</div><div class="line">#.second</div><div class="line">#.third</div><div class="line">*/</div><div class="line"><span class="comment">//正则检测输入字符串是否大于5位且必须为字母与数字的混合</span></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">check</span>(<span class="params">str</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="regexp">/[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/</span>);</div><div class="line">    <span class="keyword">if</span> (reg.test(str) &amp;&amp; str.length &gt; <span class="number">5</span>) &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//alert(check('q52830to'));       true</span></div><div class="line">  <span class="comment">//alert(check('q528o'));      false</span></div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;script src=&quot;/assets/js/APlayer.min.js&quot;&gt; &lt;/script&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
+&lt;h1 id=&quot;正则&quot;&gt;&lt;a href=&quot;#正则&quot; class=&quot;headerlink&quot; title=&quot;正则&quot;&gt;&lt;/a&gt;正则&lt;/h1&gt;&lt;fi
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
     <title>正则表达式(一)</title>
     <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(1)/"/>
     <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(1)/</id>
-    <published>2014-11-29T15:00:00.000Z</published>
-    <updated>2017-04-26T15:11:11.398Z</updated>
+    <published>2014-11-29T16:00:00.000Z</published>
+    <updated>2017-04-26T15:11:11.397Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>最近才发现原来我一直没学正则,之前学js一直跳过了这块,这两天赶紧补上.</p>
 <a id="more"></a>  
@@ -502,31 +544,11 @@ var paten4=/3[^8]3/;
   </entry>
   
   <entry>
-    <title>正则表达式(二)</title>
-    <link href="http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/"/>
-    <id>http://topgrd.me/2014/11/30/2014-11-30-RegExp(2)/</id>
-    <published>2014-11-29T15:00:00.000Z</published>
-    <updated>2017-04-26T15:10:58.822Z</updated>
-    
-    <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><a id="more"></a>  
-<h1 id="正则"><a href="#正则" class="headerlink" title="正则"></a>正则</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> pattern = <span class="regexp">/^([a-z]+)\s([0-9]&#123;4&#125;)/</span>; <span class="comment">//使用分组</span></div><div class="line"><span class="keyword">var</span> str = <span class="string">'hello 2014'</span>;</div><div class="line"><span class="keyword">var</span> arr = pattern.exec(str);</div><div class="line"><span class="comment">//alert(arr[0]);  //hello 2014 返回匹配到的整个字符串</span></div><div class="line"><span class="comment">//alert(arr[1]);    //hello          返回匹配到了第一个分组的字符串</span></div><div class="line"><span class="comment">//alert(arr[2]);    //2014           返回匹配到的第2个分组的字符串</span></div><div class="line"><span class="keyword">var</span> pat = <span class="regexp">/^([a-z]+)\s(?:[0-9]&#123;4&#125;)/</span>;</div><div class="line"><span class="comment">//alert(pat.exec(str));  //hello 2014,hello </span></div><div class="line"><span class="comment">//使用?:设置非捕获分组,该分组不会返回</span></div><div class="line"><span class="keyword">var</span> p = <span class="regexp">/(a?(b?(c?)))/</span>; <span class="comment">//嵌套分组 从外向里捕获</span></div><div class="line"><span class="keyword">var</span> s = <span class="string">'abc'</span>;</div><div class="line"><span class="comment">//alert(p.exec(s));     //abc abc bc c</span></div><div class="line"><span class="keyword">var</span> p1 = <span class="regexp">/he(?=llo)/</span>; <span class="comment">//he后面必须跟llo      f</span></div><div class="line"><span class="keyword">var</span> s1 = <span class="string">'hello'</span>;</div><div class="line"><span class="comment">//alert(p1.exec(s1));           //返回 he</span></div><div class="line"><span class="keyword">var</span> p2 = <span class="regexp">/\[/</span>; <span class="comment">// 用\来转义特殊字符</span></div><div class="line"><span class="keyword">var</span> s2 = <span class="string">'['</span>;</div><div class="line"><span class="comment">//alert(p2.test(s2));   //true</span></div><div class="line"><span class="keyword">var</span> p3 = <span class="regexp">/^\d+/gm</span>; <span class="comment">//m开启多行匹配 若没m则只替换第一行</span></div><div class="line"><span class="keyword">var</span> s3 = <span class="string">'1.first\n2.second\n3.third'</span>;</div><div class="line"><span class="comment">//alert(s3.replace(p3,'#'));</span></div><div class="line"><span class="comment">/* 结果</span></div><div class="line">#.first</div><div class="line">#.second</div><div class="line">#.third</div><div class="line">*/</div><div class="line"><span class="comment">//正则检测输入字符串是否大于5位且必须为字母与数字的混合</span></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">check</span>(<span class="params">str</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="regexp">/[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/</span>);</div><div class="line">    <span class="keyword">if</span> (reg.test(str) &amp;&amp; str.length &gt; <span class="number">5</span>) &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//alert(check('q52830to'));       true</span></div><div class="line">  <span class="comment">//alert(check('q528o'));      false</span></div></pre></td></tr></table></figure>]]></content>
-    
-    <summary type="html">
-    
-      &lt;script src=&quot;/assets/js/APlayer.min.js&quot;&gt; &lt;/script&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;  
-&lt;h1 id=&quot;正则&quot;&gt;&lt;a href=&quot;#正则&quot; class=&quot;headerlink&quot; title=&quot;正则&quot;&gt;&lt;/a&gt;正则&lt;/h1&gt;&lt;fi
-    
-    </summary>
-    
-    
-  </entry>
-  
-  <entry>
     <title>一片叶子落下来</title>
     <link href="http://topgrd.me/2014/11/26/2014-11-26-leavefallen/"/>
     <id>http://topgrd.me/2014/11/26/2014-11-26-leavefallen/</id>
-    <published>2014-11-25T15:00:00.000Z</published>
-    <updated>2017-04-26T15:12:54.395Z</updated>
+    <published>2014-11-25T16:00:00.000Z</published>
+    <updated>2017-04-26T15:12:54.394Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>我喜欢的故事，关于生命，关于爱。  </p>
 <a id="more"></a>
@@ -546,7 +568,7 @@ var paten4=/3[^8]3/;
     <title>又是一年银杏季</title>
     <link href="http://topgrd.me/2014/11/20/2014-11-20-feeling_11_20/"/>
     <id>http://topgrd.me/2014/11/20/2014-11-20-feeling_11_20/</id>
-    <published>2014-11-19T15:00:00.000Z</published>
+    <published>2014-11-19T16:00:00.000Z</published>
     <updated>2017-04-27T02:17:04.993Z</updated>
     
     <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>又是一年银杏季，大学已经过去一半多。</p>
@@ -557,33 +579,6 @@ var paten4=/3[^8]3/;
     <summary type="html">
     
       &lt;p&gt;又是一年银杏季，大学已经过去一半多。&lt;/p&gt;
-    
-    </summary>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>js回调函数</title>
-    <link href="http://topgrd.me/2014/11/18/2014-11-18-js_callback/"/>
-    <id>http://topgrd.me/2014/11/18/2014-11-18-js_callback/</id>
-    <published>2014-11-17T15:00:00.000Z</published>
-    <updated>2017-04-26T15:05:13.344Z</updated>
-    
-    <content type="html"><![CDATA[<script src="/assets/js/APlayer.min.js"> </script><p>javascript callback.  </p>
-<a id="more"></a>  
-<p>#js回调函数<br><em>回调函数是把函数当作参数传递给另一个函数，当这个指针被用来调用其所指向的函数时，就称毁掉函数。回调函数不是有该函数的实现方法直接调用，而是在特定的时间或条件发生时由另外的一放调用的，用于对该时间或条件进行响应。</em><br>举个例子<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">aa</span>(<span class="params">bb</span>) </span>&#123;</div><div class="line">  alert(<span class="string">'aa'</span>);</div><div class="line">  bb();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">bb</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  alert(<span class="string">'bb'</span>);</div><div class="line">&#125;</div><div class="line">aa();</div><div class="line">aa(bb);</div></pre></td></tr></table></figure></p>
-<p>运行以上函数，我们发现第一次弹出的是aa，第2次弹出的是aa,bb;<br><code>aa(bb)</code>就是用回调函数.  </p>
-<hr>
-<p>回调函数是异步编程的最基本方法<br>如果有2个函数f1和f2,后者等待前者的执行结果.<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">f1();</div><div class="line">f2();</div></pre></td></tr></table></figure></p>
-<p>如果f1是一个很耗时的任务,可以把f2写成f1的回调函数.  </p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">f1</span>(<span class="params">f2</span>) </span>&#123;</div><div class="line">  setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="comment">//f1的代码  </span></div><div class="line">    f2();</div><div class="line">  &#125;, <span class="number">1000</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这样执行代码就变成<code>f1(f2)</code><br>采用这种方式，将同步操作变为异步操作,f1不会阻塞程序运行,相当于先执行程序的主要逻辑，将耗时的操作推迟执行.<br>回调函数的缺点是不利于代码的阅读与维护，各个部分之间高度耦合（Coupling），流程会很混乱，而且每个任务只能指定一个回调函数。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;javascript callback.  &lt;/p&gt;
     
     </summary>
     
